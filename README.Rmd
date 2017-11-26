@@ -1,0 +1,27 @@
+# Case Study 2 README
+
+## Introduction 
+TODO
+
+## Purpose 
+TODO
+
+## Instructions for reproducing output
+ 1. Clone this repository
+ 2. Download and install the libraries
+ 3. Load the packages
+
+
+## Contributors: 
+Brychan Manry and Patricia Goresen
+
+## Session Info
+```{r, echo=FALSE}
+sessionInfo()
+```
+
+## File Structure
+```{r}
+data.tree::as.Node(data.frame(pathString = paste0("Root/",list.files(recursive = TRUE))))
+```
+
