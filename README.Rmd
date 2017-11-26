@@ -13,7 +13,7 @@ TODO
 
 
 ## Contributors: 
-Brychan Manry and Patricia Goresen
+Brychan Manry,Patricia Goresen, and Bradley Robinson
 
 ## Session Info
 ```{r, echo=FALSE}
