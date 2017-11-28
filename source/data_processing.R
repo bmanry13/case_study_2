@@ -48,6 +48,10 @@ rawdata_df[names(data_def_list)] <- lapply(names(data_def_list), function(x){
 #== CONVERT CHARACTER TO FACTOR
 rawdata_df <- rawdata_df %>% mutate_if(is.character, as.factor)
 
+#== Additional Numeric based Factors
+rawdata_df$JobLevel <- factor(rawdata_df$JobLevel)
+rawdata_df$StockOptionLevel <- factor(rawdata_df$StockOptionLevel)
+
 #== ADDITIONAL FACTOR VARIABLES
 numeric_to_factor_vars <- c("JobLevel","StockOptionLevel")
 rawdata_df[numeric_to_factor_vars] <- lapply(rawdata_df[numeric_to_factor_vars], factor)
@@ -58,7 +62,7 @@ single_value_vars <- names(rawdata_df)[!sapply(rawdata_df, function(x) length(un
 #-- PROTECTED CLASS VARIABLES
 protect_class_vars <- c("Age", "Gender", "MaritalStatus")
 #-- Non-Informative Variables
-non_inforative_vars <- c("EmployeeNumber")
+non_inforative_vars <- c("EmployeeNumber", "StandardHours", "EmployeeCount")
 
 #-- REMOVE UNNECESSARY VARIABLES ----
 all_removed_vars <- c(single_value_vars, protect_class_vars, non_inforative_vars)
