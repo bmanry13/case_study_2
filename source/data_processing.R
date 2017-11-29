@@ -16,6 +16,7 @@
 #################################################################################'
 ##### Load Libraries #####
 library(dplyr)
+library(readxl)
 
 ##### 1) LOAD RAW DATA #####
 unzip(zipfile = "./rawdata/CaseStudy2data.zip", files = "CaseStudy2-data.xlsx", exdir = "tempextract") # unzip to temp directory
