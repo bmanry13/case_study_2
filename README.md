@@ -1,10 +1,10 @@
 # Case Study 2 README
 
 ## Introduction 
-TODO
+DDSAnalytics, an analytics company that specialized in talent management solutions for Furtune 100 companies, is planning to leverage data science for talent management. Talent management is defined as the iterative process of developing and retaining employees. It may include workforce planning, employee training programs, identifying high-potential employees and reducing/preventing voluntary employee turnover (attrition). Our goal is to maximize talent management. 
 
 ## Purpose 
-TODO
+This project uses exploratory data analysis to determine the top three factors that lead to attrition. In addition, we want to discover trends within specific job roles. This will give DDSAnalytics a competitive edge over its competition.
 
 ## Instructions for reproducing output
  1. Clone this repository
@@ -68,14 +68,14 @@ data.tree::as.Node(data.frame(pathString = paste0("Root/",list.files(recursive =
 ```
 ##                     levelName
 ## 1  Root                      
-## 2   ¦--case_study_2.Rproj    
-## 3   ¦--case_study_extra      
-## 4   ¦   °--CaseStudy02.pdf   
-## 5   ¦--data_processing.R     
-## 6   ¦--MakeAnalysis.R        
-## 7   ¦--rawdata               
-## 8   ¦   °--CaseStudy2data.zip
-## 9   ¦--README.md             
-## 10  °--README.Rmd
+## 2   ?--case_study_2.Rproj    
+## 3   ?--case_study_extra      
+## 4   ?   ?--CaseStudy02.pdf   
+## 5   ?--data_processing.R     
+## 6   ?--MakeAnalysis.R        
+## 7   ?--rawdata               
+## 8   ?   ?--CaseStudy2data.zip
+## 9   ?--README.md             
+## 10  ?--README.Rmd
 ```
 
