@@ -17,4 +17,15 @@ ggplot(SatisAnalysis, aes(x= Role, y=Freq)) +
   scale_y_continuous(expand = c(0,0)) +
   scale_fill_manual(values=c("yellow", "orange", "red" , "red4"))
 
+#### Exploring trends in Department and Environment####
+EnvironAnalysis <- data.frame(table(analysis_df$Department, analysis_df$EnvironmentSatisfaction))
+ggplot(EnvironAnalysis, aes(x= Var1, y=Freq)) + 
+  coord_flip() + 
+  ggtitle("Environment Satisfaction by Department") + 
+  theme(plot.title = element_text(hjust = 0.5)) + 
+  geom_bar(aes(fill=Var2), stat="identity") + 
+  labs(x= "Department", y= "Frequency")  + 
+  scale_y_continuous(expand = c(0,0)) +
+  scale_fill_manual(values=c("yellow", "orange", "red" , "red4"))
+
 
