@@ -1,0 +1,55 @@
+---
+title: "DDSAnalytics - Key Attrition Factors Analysis"
+author: "Brychan Manry, Patricia Goresen, and Bradley Robinson"
+params:
+  run_date: !r as.character(Sys.Date())
+date: "`r params$run_date`"
+output: html_document
+---
+[Link to GitHub Repository](https://github.com/bmanry13/case_study_2)
+
+```{r setup}
+knitr::opts_chunk$set(echo = TRUE, message=FALSE)
+```
+
+#Executive Summary
+!!!TODO!!!
+
+#Introduction 
+!!!TODO!!!
+
+#Data Processing and Cleaning
+!!!TODO!!!
+
+knit child ("./analysis/documentparts/data_processing_section.Rmd")
+ 
+#Exploratory Analysis
+##Goals / Approach
+!!!TODO!!!
+
+##Trends and High Level Assessment of Variables
+!!!TODO!!!
+
+##Key Variable Identification
+!!!TODO!!!
+
+###Univariate Identificaion
+!!!TODO!!!
+1) Logit Models
+2) Chi-square categorical variables
+
+###Machine Learning
+!!!TODO!!!
+1) Random Forest
+2) Gradient Boosting
+
+##Identified Top-X Variables Assessment
+1) Related Model, Figures, Plots
+!!!TODO!!!
+
+## Conclusion
+!!!TODO!!!
+
+
+
+ 
