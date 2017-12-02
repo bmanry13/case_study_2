@@ -51,7 +51,4 @@ knit child ("./analysis/documentparts/data_processing_section.Rmd")
 !!!TODO!!!
 knit exec summary?
 
-
-
-
  
