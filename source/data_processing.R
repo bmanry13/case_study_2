@@ -73,4 +73,4 @@ rawdata_df <- rawdata_df[names(rawdata_df)[!names(rawdata_df)%in%all_removed_var
 analysis_df <- rawdata_df
 
 #== CLEANUP
-rm(list = ls()[ls()!="analysis_df"])
+rm(list = c("rawdata_df", "data_def_list"))

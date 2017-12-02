@@ -17,7 +17,11 @@ library(readr)
 #source("./source/data_processing.R")
 
 ##### Knit html and Markdown File ####
-# TODO
+rmarkdown::render(input = "./analysis/analysis_main.Rmd", 
+                  output_file = "DDSAnalytics - Key Attrition Factors Analysis.html",
+                  output_dir = ".",
+                  output_options =  list(keep_md = TRUE, self_contained=TRUE,
+                                         theme = "journal", toc = TRUE, toc_float = TRUE))
 
 ##### Knit README file for GitHub #####
 knitr::knit(input = "README.Rmd", output = "README.md")
