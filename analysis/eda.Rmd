@@ -1,0 +1,139 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+```{r}
+library(readxl)
+library(ggplot2)
+setwd("../rawdata/CaseStudy2data/")
+df <- read_xlsx("CaseStudy2-data.xlsx", )
+head(df)
+```
+## Exploring the Data
+There are many data points that could have an influence on employee attrition, so it is important to find a consistent methodology to find interesting points that might influence attrition. To start, let's look at the data in general:
+
+```{r}
+df$Attrition <- df$Attrition == "Yes"
+attrition <- length(df$Attrition[df$Attrition])
+non_attrition <- length(df$Attrition[!df$Attrition])
+attrition/(non_attrition+attrition)
+```
+So about 16% of employees are lost. This tells us that, if we find any rates higher than .16, it might be worth a further look.
+
+### Looking at Different Columns
+
+Let's start with distance from home, and see how that might relate to attrition rates:
+
+```{r}
+attrition_rate_distance <- df %>%
+  group_by(DistanceFromHome) %>%
+  count(att_count = Attrition) %>%
+  group_by(att_count)
+  
+attrition_rate_true <- attrition_rate_distance[attrition_rate_distance$att_count,]
+attrition_rate_false <- attrition_rate_distance[!attrition_rate_distance$att_count,]
+attrition_rate_distance <- merge(attrition_rate_true, attrition_rate_false, by = "DistanceFromHome")
+attrition_rate_distance <- attrition_rate_distance %>%
+  mutate(AttRate = n.x / (n.x + n.y))
+attrition_rate_distance
+```
+
+```{r}
+ggplot(attrition_rate_distance) +
+  geom_col(mapping = aes(x = DistanceFromHome, y = AttRate), fill = "blue")
+```
+Looking at that graph, it appears that there are some extremely high attrition rates for some distances, and the general pattern is, that, as the distance increases, so does the attrition rate.
+
+
+Now, let's look at education:
+
+```{r}
+attrition_rate_education <- df %>%
+  group_by(Education) %>%
+  count(att_count = Attrition) %>%
+  group_by(att_count)
+  
+attrition_rate_true <- attrition_rate_education[attrition_rate_education$att_count,]
+attrition_rate_false <- attrition_rate_education[!attrition_rate_education$att_count,]
+head(attrition_rate_true)
+head(attrition_rate_false)
+attrition_rate_education <- merge(attrition_rate_true, attrition_rate_false, by = "Education")
+attrition_rate_education <- attrition_rate_education %>%
+  mutate(AttRate = n.x / (n.x + n.y))
+attrition_rate_education
+```
+
+```{r}
+ggplot(attrition_rate_education) +
+  geom_col(mapping = aes(x = Education, y = AttRate), fill = "blue")
+```
+Education appears to relate to attrition too, an increase in education sees a lower rate of attrition. However, nothing is extremely high, and education might be due to a secondary influence.
+
+Let's continue and create a function to do this analysis:
+```{r}
+att_rate <- function(df, grouper) {
+  attrition_rate_grouped <- df %>%
+    group_by_(grouper) %>%
+    count(att_count = Attrition) %>%
+    group_by(att_count)
+   
+  attrition_rate_true <- attrition_rate_grouped[attrition_rate_grouped$att_count,]
+  attrition_rate_false <- attrition_rate_grouped[!attrition_rate_grouped$att_count,]
+  attrition_rate_grouped <- merge(attrition_rate_true, attrition_rate_false, by = grouper)
+  attrition_rate_grouped <- attrition_rate_grouped %>%
+     mutate(AttRate = n.x / (n.x + n.y))
+  attrition_rate_grouped
+}
+# Just test it out to make sure it works
+education <- att_rate(df, "Education")
+head(education)
+```
+
+```{r}
+names(df)
+```
+Here are just a few more examples:
+```{r}
+hourly_att <- att_rate(df, "HourlyRate")
+head(hourly_att)
+role_att <- att_rate(df, "JobRole")
+head(role_att)
+performance_att <- att_rate(df, "PerformanceRating")
+performance_att
+```
+We can rule out performance rating, since it has so few variables it would be impossible to interpret.
+
+```{r}
+ggplot(hourly_att) +
+  geom_col(mapping = aes(x = HourlyRate, y = AttRate), fill = "blue")
+ggplot(role_att) +
+  geom_col(mapping = aes(x = JobRole, y = AttRate), fill = "blue")
+```
+```{r}
+names(df)
+```
+Now let's go through one by all of them, avoiding any that might have legal implications (age, gender, marital status)
+
+```{r}
+daily_rate_att <- att_rate(df, "DailyRate")
+ggplot(daily_rate_att) +
+  geom_col(mapping = aes(x = DailyRate, y = AttRate), fill = "blue")
+```
+```{r}
+emp_num_att <- att_rate(df, "EmployeeNumber")
+ggplot(emp_num_att) +
+  geom_col(mapping = aes(x = EmployeeNumber, y = AttRate), fill = "blue")
+```
+
+```{r}
+month_att <- att_rate(df, "MonthlyIncome")
+ggplot(month_att) +
+  geom_col(mapping = aes(x = MonthlyIncome, y = AttRate), fill = "blue")
+```
+
+```{r}
+work_life_att <- att_rate(df, "WorkLifeBalance")
+ggplot(work_life_att) +
+  geom_col(mapping = aes(x = WorkLifeBalance, y = AttRate), fill = "blue")
+```
+
