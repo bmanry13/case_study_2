@@ -1,3 +1,6 @@
+#### Opening data source
+library(readxl)
+analysis_df <- read_xlsx("rawdata/CaseStudy2data/CaseStudy2-data.xlsx") 
 #### Exploring trends in job role and Job Satisfaction####
 library(ggplot2)
 SatisAnalysis <- data.frame('Department' = analysis_df$Department, 'JobRole' = analysis_df$JobRole, 'JobSatisfaction' = analysis_df$JobSatisfaction)
@@ -21,6 +24,7 @@ ggplot(SatisAnalysis, aes(x= Role, y=perc)) +
   labs(x= "Job Role", y= "Percentage")  + 
   scale_y_continuous(expand = c(0,0)) +
   scale_fill_manual(values=c("yellow", "orange", "red" , "red4"))
+ggsave("job_satisfaction.png", width= 7, height = 3.78)
 
 
 #### Exploring trends in Department and Environment####
