@@ -48,7 +48,7 @@ attrition_rate_distance
 
 ```{r}
 ggplot(attrition_rate_distance) +
-  geom_col(mapping = aes(x = DistanceFromHome, y = AttRate), fill = "blue")
+  geom_col(mapping = aes(x = DistanceFromHome, y = AttRate), fill = "blue") + ggtitle("The Closer To Home, The Lower the Attrition Rate")
 ```
 Looking at that graph, it appears that there are some extremely high attrition rates for some distances, and the general pattern is, that, as the distance increases, so does the attrition rate.
 
@@ -73,7 +73,7 @@ attrition_rate_education
 
 ```{r}
 ggplot(attrition_rate_education) +
-  geom_col(mapping = aes(x = Education, y = AttRate), fill = "blue")
+  geom_col(mapping = aes(x = Education, y = AttRate), fill = "blue") + ggtitle("Education Level Does Not Affect Attrition")
 ```
 Education appears to relate to attrition too, an increase in education sees a lower rate of attrition. However, nothing is extremely high, and education might be due to a secondary influence.
 
