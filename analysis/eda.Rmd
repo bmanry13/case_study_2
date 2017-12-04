@@ -116,15 +116,21 @@ We can rule out performance rating, since it has so few variables it would be im
 
 
 ```{r}
-names(df)
 exclude_names <- c("Age", "Gender", "Attrition", "Over18", "EmployeeNumber", "EmployeeCount", "StandardHours")
 names_use <- names(df)[!names(df) %in% exclude_names]
+
+att_differences <- c()
 for (name in names_use) {
   name_att <- att_rate(df, name)
+  max_att <- max(name_att$AttRate)
+  min_att <- min(name_att$AttRate)
+  att_diff <- max_att - min_att
+  att_differences <- c(att_differences, att_diff)
   plot <- ggplot(name_att) +
     geom_col(mapping = aes_string(x = name, y = "AttRate"), fill = "blue")
   print(plot)
 }
+att_differences
 ```
 
 Looking at time based data points (such as years in a job, etc. ), there is an interesting pattern that emerges. The number of years someone has been doing something tends to correlate with a decrease in attrition. However, at highest amount of years, there tends to be an increase. This may, however be due to retirement.
@@ -169,6 +175,15 @@ length(significant_variables)
 length(names_use)
 ```
 
-#### Combining data?
+#### Differences between attrition rates
+```{r}
+attrition_diff_df <- data.frame(names_use, att_differences)
+attrition_diff_df
+```
+```{r}
+attrition_ordered <- attrition_diff_df[order(-attrition_diff_df$att_differences),]
+attrition_ordered
+```
+
 
 
