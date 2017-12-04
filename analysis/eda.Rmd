@@ -5,6 +5,7 @@ output: html_notebook
 ```{r}
 library(readxl)
 library(ggplot2)
+library(tidyverse)
 setwd("../rawdata/CaseStudy2data/")
 df <- read_xlsx("CaseStudy2-data.xlsx", )
 head(df)
@@ -19,6 +20,13 @@ non_attrition <- length(df$Attrition[!df$Attrition])
 attrition/(non_attrition+attrition)
 ```
 So about 16% of employees are lost. This tells us that, if we find any rates higher than .16, it might be worth a further look.
+
+#### More on the Data
+
+```{r}
+summary(df)
+```
+
 
 ### Looking at Different Columns
 
@@ -103,37 +111,36 @@ performance_att
 ```
 We can rule out performance rating, since it has so few variables it would be impossible to interpret.
 
-```{r}
-ggplot(hourly_att) +
-  geom_col(mapping = aes(x = HourlyRate, y = AttRate), fill = "blue")
-ggplot(role_att) +
-  geom_col(mapping = aes(x = JobRole, y = AttRate), fill = "blue")
-```
-```{r}
-names(df)
-```
-Now let's go through one by all of them, avoiding any that might have legal implications (age, gender, marital status)
+
+
+
 
 ```{r}
-daily_rate_att <- att_rate(df, "DailyRate")
-ggplot(daily_rate_att) +
-  geom_col(mapping = aes(x = DailyRate, y = AttRate), fill = "blue")
-```
-```{r}
-emp_num_att <- att_rate(df, "EmployeeNumber")
-ggplot(emp_num_att) +
-  geom_col(mapping = aes(x = EmployeeNumber, y = AttRate), fill = "blue")
-```
-
-```{r}
-month_att <- att_rate(df, "MonthlyIncome")
-ggplot(month_att) +
-  geom_col(mapping = aes(x = MonthlyIncome, y = AttRate), fill = "blue")
+exclude_names <- c("Age", "Gender", "Attrition")
+names_use <- names(df)[!names(df) %in% exclude_names]
+for (name in names_use) {
+  name_att <- att_rate(df, name)
+  plot <- ggplot(name_att) +
+    geom_col(mapping = aes_string(x = name, y = "AttRate"), fill = "blue")
+  print(plot)
+}
 ```
 
-```{r}
-work_life_att <- att_rate(df, "WorkLifeBalance")
-ggplot(work_life_att) +
-  geom_col(mapping = aes(x = WorkLifeBalance, y = AttRate), fill = "blue")
-```
+Looking at time based data points (such as years in a job, etc. ), there is an interesting pattern that emerges. The number of years someone has been doing something tends to correlate with a decrease in attrition. However, at highest amount of years, there tends to be an increase. This may, however be due to retirement.
+
+Other interesting patterns:
+
+#### Sales
+In the graph of positions, the sales representative postion has a very high attrition rate (near 40%), as well as the sales department having a high attrition rate (21%) compared to other departments.
+
+#### Role Involvement
+Steps to improve an employees sense of belonging in a particular position tend to decrease attrition. For example, there is a negative correlation between training times in the last year and attrition rate. And job involvement ratings show a dramatic decrease in attrition (1 = 34%, and the max 4 = 9%)
+
+#### Money Matters
+Stock options tend to decrease attrition, however, the highest sees a spike in attrition again. This might be an indication that those with the best stock options tend to be highly desirable employees and thus are at a greater risk of being offered a higher paying position.
+
+#### Misc
+Being a manager is appealing: managers have a very low attrition rate (5%), but not quite as appealing as being a research director (2%). Research director positions are so rare, however that it might be more difficult to transfer to another organization with a similar role.
+
+
 
