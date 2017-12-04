@@ -1,0 +1,173 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+```{r}
+library(readxl)
+library(ggplot2)
+library(tidyverse)
+setwd("../rawdata/CaseStudy2data/")
+df <- read_xlsx("CaseStudy2-data.xlsx", )
+head(df)
+```
+## Exploring the Data
+There are many data points that could have an influence on employee attrition, so it is important to find a consistent methodology to find interesting points that might influence attrition. To start, let's look at the data in general:
+
+```{r}
+df$Attrition <- df$Attrition == "Yes"
+attrition <- length(df$Attrition[df$Attrition])
+non_attrition <- length(df$Attrition[!df$Attrition])
+attrition/(non_attrition+attrition)
+```
+So about 16% of employees are lost. This tells us that, if we find any rates higher than .16, it might be worth a further look.
+
+#### More on the Data
+
+```{r}
+summary(df)
+```
+
+
+### Looking at Different Columns
+
+Let's start with distance from home, and see how that might relate to attrition rates:
+
+```{r}
+attrition_rate_distance <- df %>%
+  group_by(DistanceFromHome) %>%
+  count(att_count = Attrition) %>%
+  group_by(att_count)
+  
+attrition_rate_true <- attrition_rate_distance[attrition_rate_distance$att_count,]
+attrition_rate_false <- attrition_rate_distance[!attrition_rate_distance$att_count,]
+attrition_rate_distance <- merge(attrition_rate_true, attrition_rate_false, by = "DistanceFromHome")
+attrition_rate_distance <- attrition_rate_distance %>%
+  mutate(AttRate = n.x / (n.x + n.y))
+attrition_rate_distance
+```
+
+```{r}
+ggplot(attrition_rate_distance) +
+  geom_col(mapping = aes(x = DistanceFromHome, y = AttRate), fill = "blue")
+```
+Looking at that graph, it appears that there are some extremely high attrition rates for some distances, and the general pattern is, that, as the distance increases, so does the attrition rate.
+
+
+Now, let's look at education:
+
+```{r}
+attrition_rate_education <- df %>%
+  group_by(Education) %>%
+  count(att_count = Attrition) %>%
+  group_by(att_count)
+  
+attrition_rate_true <- attrition_rate_education[attrition_rate_education$att_count,]
+attrition_rate_false <- attrition_rate_education[!attrition_rate_education$att_count,]
+head(attrition_rate_true)
+head(attrition_rate_false)
+attrition_rate_education <- merge(attrition_rate_true, attrition_rate_false, by = "Education")
+attrition_rate_education <- attrition_rate_education %>%
+  mutate(AttRate = n.x / (n.x + n.y))
+attrition_rate_education
+```
+
+```{r}
+ggplot(attrition_rate_education) +
+  geom_col(mapping = aes(x = Education, y = AttRate), fill = "blue")
+```
+Education appears to relate to attrition too, an increase in education sees a lower rate of attrition. However, nothing is extremely high, and education might be due to a secondary influence.
+
+Let's continue and create a function to do this analysis:
+```{r}
+att_rate <- function(df, grouper) {
+  attrition_rate_grouped <- df %>%
+    group_by_(grouper) %>%
+    count(att_count = Attrition) %>%
+    group_by(att_count)
+   
+  attrition_rate_true <- attrition_rate_grouped[attrition_rate_grouped$att_count,]
+  attrition_rate_false <- attrition_rate_grouped[!attrition_rate_grouped$att_count,]
+  attrition_rate_grouped <- merge(attrition_rate_true, attrition_rate_false, by = grouper)
+  attrition_rate_grouped <- attrition_rate_grouped %>%
+     mutate(AttRate = n.x / (n.x + n.y))
+  attrition_rate_grouped
+}
+# Just test it out to make sure it works
+education <- att_rate(df, "Education")
+head(education)
+```
+
+```{r}
+names(df)
+```
+Here are just a few more examples:
+```{r}
+hourly_att <- att_rate(df, "HourlyRate")
+head(hourly_att)
+role_att <- att_rate(df, "JobRole")
+head(role_att)
+performance_att <- att_rate(df, "PerformanceRating")
+performance_att
+```
+We can rule out performance rating, since it has so few variables it would be impossible to interpret.
+
+
+
+
+
+```{r}
+names(df)
+exclude_names <- c("Age", "Gender", "Attrition", "Over18", "EmployeeNumber", "EmployeeCount", "StandardHours")
+names_use <- names(df)[!names(df) %in% exclude_names]
+for (name in names_use) {
+  name_att <- att_rate(df, name)
+  plot <- ggplot(name_att) +
+    geom_col(mapping = aes_string(x = name, y = "AttRate"), fill = "blue")
+  print(plot)
+}
+```
+
+Looking at time based data points (such as years in a job, etc. ), there is an interesting pattern that emerges. The number of years someone has been doing something tends to correlate with a decrease in attrition. However, at highest amount of years, there tends to be an increase. This may, however be due to retirement.
+
+Other interesting patterns:
+
+#### Sales
+In the graph of positions, the sales representative postion has a very high attrition rate (near 40%), as well as the sales department having a high attrition rate (21%) compared to other departments.
+
+#### Role Involvement
+Steps to improve an employees sense of belonging in a particular position tend to decrease attrition. For example, there is a negative correlation between training times in the last year and attrition rate. And job involvement ratings show a dramatic decrease in attrition (1 = 34%, and the max 4 = 9%)
+
+#### Money Matters
+Stock options tend to decrease attrition, however, the highest sees a spike in attrition again. This might be an indication that those with the best stock options tend to be highly desirable employees and thus are at a greater risk of being offered a higher paying position.
+
+#### Misc
+Being a manager is appealing: managers have a very low attrition rate (5%), but not quite as appealing as being a research director (2%). Research director positions are so rare, however that it might be more difficult to transfer to another organization with a similar role.
+
+## Chi-Squared Test for Independence
+Now that we've looked at the graphs, we can start taking a look at what values are related to attrition with a statistical method.
+
+```{r}
+significant_variables <- c()
+# df <- data.frame(unclass(df))
+for (name in names_use) {
+  tbl <- table(df[, name], df[, "Attrition"])
+  print(name)
+  test_result <- chisq.test(tbl) 
+  if (test_result$p.value < .05) {
+    print(test_result)
+    significant_variables <- c(significant_variables, name)
+  } else {
+    print(test_result$p.value)
+    print("Did not pass threshold")
+  }
+}
+significant_variables
+```
+
+```{r}
+length(significant_variables)
+length(names_use)
+```
+
+
+
