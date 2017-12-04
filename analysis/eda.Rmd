@@ -118,17 +118,28 @@ We can rule out performance rating, since it has so few variables it would be im
 ```{r}
 exclude_names <- c("Age", "Gender", "Attrition", "Over18", "EmployeeNumber", "EmployeeCount", "StandardHours")
 names_use <- names(df)[!names(df) %in% exclude_names]
+# A number of these graphs do not provide useful information because of the data format
+ugly_graphs <- c("")
 
-att_differences <- c()
+att_differences <- c("DailyRate", "MonthlyIncome", "MonthlyRate")
+# TODO: remove the graphs that are ugly
 for (name in names_use) {
+  name_title_split <- regmatches(name, gregexpr("[A-Z]+[a-z]+", name, perl = T))
+  name_title <- paste(name_title_split[[1]], collapse = " ")
   name_att <- att_rate(df, name)
   max_att <- max(name_att$AttRate)
   min_att <- min(name_att$AttRate)
   att_diff <- max_att - min_att
   att_differences <- c(att_differences, att_diff)
+  plot_title <- paste(c("Attrition Rate by ", name_title), collapse = "")
   plot <- ggplot(name_att) +
-    geom_col(mapping = aes_string(x = name, y = "AttRate"), fill = "blue")
+    geom_col(mapping = aes_string(x = name, y = "AttRate"), fill = "blue") +
+    labs(x = name_title, y = "Attrition Rate") +
+    ggtitle(plot_title) +
+    coord_flip()
   print(plot)
+  file_name <- paste(c("../case_study_extra/graphs/", name, ".png"), collapse = "")
+  ggsave(file_name)
 }
 att_differences
 ```
