@@ -37,4 +37,3 @@ ggplot(EnvironAnalysis, aes(x= Var1, y=perc)) +
   scale_y_continuous(expand = c(0,0)) +
   scale_fill_manual(values=c("yellow", "orange", "red" , "red4"))
 
-
