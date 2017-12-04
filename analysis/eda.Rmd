@@ -116,7 +116,8 @@ We can rule out performance rating, since it has so few variables it would be im
 
 
 ```{r}
-exclude_names <- c("Age", "Gender", "Attrition")
+names(df)
+exclude_names <- c("Age", "Gender", "Attrition", "Over18", "EmployeeNumber", "EmployeeCount", "StandardHours")
 names_use <- names(df)[!names(df) %in% exclude_names]
 for (name in names_use) {
   name_att <- att_rate(df, name)
@@ -141,6 +142,32 @@ Stock options tend to decrease attrition, however, the highest sees a spike in a
 
 #### Misc
 Being a manager is appealing: managers have a very low attrition rate (5%), but not quite as appealing as being a research director (2%). Research director positions are so rare, however that it might be more difficult to transfer to another organization with a similar role.
+
+## Chi-Squared Test for Independence
+Now that we've looked at the graphs, we can start taking a look at what values are related to attrition with a statistical method.
+
+```{r}
+significant_variables <- c()
+# df <- data.frame(unclass(df))
+for (name in names_use) {
+  tbl <- table(df[, name], df[, "Attrition"])
+  print(name)
+  test_result <- chisq.test(tbl) 
+  if (test_result$p.value < .05) {
+    print(test_result)
+    significant_variables <- c(significant_variables, name)
+  } else {
+    print(test_result$p.value)
+    print("Did not pass threshold")
+  }
+}
+significant_variables
+```
+
+```{r}
+length(significant_variables)
+length(names_use)
+```
 
 
 
