@@ -24,15 +24,9 @@ ggplot(SatisAnalysis, aes(x= Role, y=perc)) +
   geom_bar(aes(fill=Satisfaction), stat="identity") + 
   labs(x= "Job Role", y= "Percentage Satisfaction")  + 
   scale_y_continuous(expand = c(0,0)) +
-<<<<<<< HEAD
-  scale_fill_manual(values=c("yellow", "orange", "red" , "red4")) +
-
-
-
-=======
+  scale_fill_manual(values=c("yellow", "orange", "red" , "red4"))
   scale_fill_manual(values=c("yellow", "orange", "red" , "red4"))
 ggsave("job_satisfaction.png", width= 7, height = 3.78)
->>>>>>> 315b3d6f52cf0a6c10142b30c562c1dea8be30d4
 
 
 #### Exploring trends in Department and Environment####
