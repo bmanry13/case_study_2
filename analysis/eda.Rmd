@@ -156,7 +156,7 @@ Now that we've looked at the graphs, we can start taking a look at what values a
 significant_variables <- c()
 df <- data.frame(unclass(df))
 for (name in names_use) {
-  tbl <- table(df[, name], df[, "Attrition"])
+  tbl <- table(df[, "Attrition"], df[, name])
   print(name)
   test_result <- chisq.test(tbl) 
   if (test_result$p.value < .05) {
@@ -185,5 +185,4 @@ attrition_ordered <- attrition_diff_df[order(-attrition_diff_df$att_differences)
 attrition_ordered
 ```
 
-
-
+Most of the top attrition rate differences are listed in the significant variables. Daily rate, though, is not. This may be due to the large distribution of values in daily rate, which means that the influence may have been missed.
