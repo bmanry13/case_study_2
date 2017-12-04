@@ -148,7 +148,7 @@ Now that we've looked at the graphs, we can start taking a look at what values a
 
 ```{r}
 significant_variables <- c()
-# df <- data.frame(unclass(df))
+df <- data.frame(unclass(df))
 for (name in names_use) {
   tbl <- table(df[, name], df[, "Attrition"])
   print(name)
@@ -169,5 +169,6 @@ length(significant_variables)
 length(names_use)
 ```
 
+#### Combining data?
 
 
