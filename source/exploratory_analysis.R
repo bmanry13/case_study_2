@@ -7,24 +7,33 @@ SatisAnalysis <- transform(SatisAnalysis, JobRole = ifelse(JobRole == 'Manager' 
 SatisAnalysis <- data.frame(table(SatisAnalysis$JobRole, SatisAnalysis$JobSatisfaction, SatisAnalysis$Department))
 colnames(SatisAnalysis) <- c("Role", "Satisfaction", "Department", "Freq")
 SatisAnalysis <- SatisAnalysis[ ! SatisAnalysis$Freq==0, ]   
+#change counts to percentages
+SatisAnalysis$Percentages <- 
+SatisAnalysis <- SatisAnalysis %>% 
+  group_by(Role,Department) %>% 
+  mutate(perc=Freq/sum(Freq))  
 #plot counts
-ggplot(SatisAnalysis, aes(x= Role, y=Freq)) + 
+ggplot(SatisAnalysis, aes(x= Role, y=perc)) + 
   coord_flip() + 
   ggtitle("Job Satisfaction by Job Role") + 
   theme(plot.title = element_text(hjust = 0.5)) + 
   geom_bar(aes(fill=Satisfaction), stat="identity") + 
-  labs(x= "Job Role", y= "Frequency")  + 
+  labs(x= "Job Role", y= "Percentage")  + 
   scale_y_continuous(expand = c(0,0)) +
   scale_fill_manual(values=c("yellow", "orange", "red" , "red4"))
 
+
 #### Exploring trends in Department and Environment####
 EnvironAnalysis <- data.frame(table(analysis_df$Department, analysis_df$EnvironmentSatisfaction))
-ggplot(EnvironAnalysis, aes(x= Var1, y=Freq)) + 
+  EnvironAnalysis <- EnvironAnalysis %>% 
+  group_by(Var1) %>% 
+  mutate(perc=Freq/sum(Freq))
+ggplot(EnvironAnalysis, aes(x= Var1, y=perc)) + 
   coord_flip() + 
   ggtitle("Environment Satisfaction by Department") + 
   theme(plot.title = element_text(hjust = 0.5)) + 
   geom_bar(aes(fill=Var2), stat="identity") + 
-  labs(x= "Department", y= "Frequency")  + 
+  labs(x= "Department", y= "Percentage")  + 
   scale_y_continuous(expand = c(0,0)) +
   scale_fill_manual(values=c("yellow", "orange", "red" , "red4"))
 
