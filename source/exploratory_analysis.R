@@ -100,3 +100,10 @@ t.test(NumCompaniesWorked~Attrition, data = analysis_df)
 #Difference in years in current role and attrition
 t.test(YearsInCurrentRole~Attrition, data = analysis_df)
 
+t.test(JobSatisfaction~Attrition, data= analysis_df)
+t.test(Education~Attrition, data = analysis_df)
+
+t.test(JobLevel~Attrition, data = analysis_df)
+
+
+
