@@ -31,7 +31,7 @@ ggplot(SatisAnalysis, aes(x= Role, y=perc)) +
   scale_fill_manual(values=c("yellow", "orange", "red" , "red4") , labels=c("Low", "Medium", "High", "Very High"))
 ggsave("job_satisfaction.png", width= 7, height = 3.78)
 
-t.test(SatisAnalysis$Role, SatisAnalysis$perc)
+chisq.test(SatisAnalysis$Satisfaction,SatisAnalysis$Role)
 
 #### Exploring trends in Department and Environment####
 EnvironAnalysis <- data.frame(table(analysis_df$Department, analysis_df$EnvironmentSatisfaction))
@@ -48,8 +48,6 @@ ggplot(EnvironAnalysis, aes(x= Department, y=perc)) +
   labs(x= "Department", y= "Percentage Satisfaction")  + 
   scale_y_continuous(expand = c(0,0)) +
   scale_fill_manual(values=c("yellow", "orange", "red" , "red4") , labels=c("Low", "Medium", "High", "Very High"))
-
-
 
 
 
@@ -99,4 +97,8 @@ t.test(TotalWorkingYears~Attrition, data = analysis_df)
 t.test(NumCompaniesWorked~Attrition, data = analysis_df)
 #Difference in years in current role and attrition
 t.test(YearsInCurrentRole~Attrition, data = analysis_df)
+
+t.test(DistanceFromHome~Attrition, data = analysis_df)
+
+t.test(JobLevel~Attrition, data = analysis_df)
 
