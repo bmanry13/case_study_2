@@ -1,6 +1,9 @@
 #### Opening data source
 library(readxl)
-analysis_df <- read_xlsx("rawdata/CaseStudy2data/CaseStudy2-data.xlsx") 
+library(tidyr)
+library(dplyr)
+analysis_df <- read_xlsx("rawdata/CaseStudy2-data.xlsx") 
+
 #### Exploring trends in job role and Job Satisfaction####
 library(ggplot2)
 SatisAnalysis <- data.frame('Department' = analysis_df$Department, 'JobRole' = analysis_df$JobRole, 'JobSatisfaction' = analysis_df$JobSatisfaction)
@@ -19,15 +22,16 @@ SatisAnalysis$perc <- SatisAnalysis$perc*100
 ggplot(SatisAnalysis, aes(x= Role, y=perc)) + 
   coord_flip() + 
   ggtitle("Job Satisfaction by Job Role") +
-  facet_grid(Department~.) +
+  facet_grid(Department~., scales = "free", space = "free") +
+  theme(strip.text.x = element_text(angle = 0)) +
   theme(plot.title = element_text(hjust = 0.5)) + 
-  geom_bar(aes(fill=Satisfaction), stat="identity") + 
+  geom_bar(aes(fill=Satisfaction), stat="identity", position = "dodge", colour = "black") + 
   labs(x= "Job Role", y= "Percentage Satisfaction")  + 
-  scale_y_continuous(expand = c(0,0)) +
-  scale_fill_manual(values=c("yellow", "orange", "red" , "red4"))
-  scale_fill_manual(values=c("yellow", "orange", "red" , "red4"))
+  scale_y_continuous(expand = c(0,0), limits = c(0,45)) +
+  scale_fill_manual(values=c("yellow", "orange", "red" , "red4") , labels=c("Low", "Medium", "High", "Very High"))
 ggsave("job_satisfaction.png", width= 7, height = 3.78)
 
+t.test(SatisAnalysis$Role, SatisAnalysis$perc)
 
 #### Exploring trends in Department and Environment####
 EnvironAnalysis <- data.frame(table(analysis_df$Department, analysis_df$EnvironmentSatisfaction))
@@ -43,7 +47,7 @@ ggplot(EnvironAnalysis, aes(x= Department, y=perc)) +
   geom_bar(aes(fill=Satisfaction), stat="identity", position = "dodge") + 
   labs(x= "Department", y= "Percentage Satisfaction")  + 
   scale_y_continuous(expand = c(0,0)) +
-  scale_fill_manual(values=c("yellow", "orange", "red" , "red4"))
+  scale_fill_manual(values=c("yellow", "orange", "red" , "red4") , labels=c("Low", "Medium", "High", "Very High"))
 
 
 
@@ -58,11 +62,41 @@ group_by(Var1) %>%
 mutate(perc=Freq/sum(Freq))
 InvolvAnalysis$perc <- InvolvAnalysis$perc *100
 ggplot(InvolvAnalysis, aes(x= Var1, y=perc)) + 
-ggtitle("Job Involvement by Job Role") + 
-theme(plot.title = element_text(hjust = 0.5)) + 
-geom_bar(aes(fill=Var2), stat="identity", position = "dodge") + 
-labs(x= "Job Role", y= "Percentage Involvement")  + 
-scale_y_continuous(expand = c(0,0)) +
-scale_fill_manual(values=c("yellow", "orange", "red" , "red4")) +
-facet_grid(Var3~.) +
-coord_flip()
+  ggtitle("Job Involvement by Job Role") + 
+  theme(plot.title = element_text(hjust = 0.5)) + 
+  geom_bar(aes(fill=Var2), stat="identity", position = "dodge" , colour="black") + 
+  labs(x= "Job Role", y= "Percentage Involvement")  + 
+  scale_y_continuous(expand = c(0,0), limits = c(0,70)) +
+  scale_fill_manual(values=c("yellow", "orange", "red" , "red4"), labels=c("Low", "Medium", "High", "Very High")) +
+  facet_grid(Var3~.) +
+  coord_flip() +
+  facet_grid(Var3~., scales = "free", space = "free") +
+  theme(strip.text.x = element_text(angle = 0)) 
+
+
+####### Monthly income and job satisfaction#######
+
+
+
+#YearsInCurrentRole
+#Monthly income
+#YearsSinceLastPromotion
+#WorkLifeBalance
+#PerformanceRating
+#NumCompaniesWorked
+
+#Salary difference between income by attrition
+t.test(MonthlyIncome~Attrition, data=analysis_df)
+#Total Working Years and Monthly salary
+t.test(MonthlyIncome~PerformanceRating, data=analysis_df)
+#Years with Manager and Attrition
+t.test(YearsWithCurrManager~Attrition, data = analysis_df)
+#Years since promotion and attrition
+t.test(YearsSinceLastPromotion~Attrition, data = analysis_df)
+#Difference in Working Years and Attrition
+t.test(TotalWorkingYears~Attrition, data = analysis_df)
+#Difference in companies worked and attrition
+t.test(NumCompaniesWorked~Attrition, data = analysis_df)
+#Difference in years in current role and attrition
+t.test(YearsInCurrentRole~Attrition, data = analysis_df)
+
