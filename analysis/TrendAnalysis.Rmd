@@ -1,0 +1,284 @@
+---
+title: "TrendAnalysis"
+output: 
+  html_document:
+    keep_md: TRUE
+---
+# Explore trends that exist in current employees
+```{r, load libraries and data}
+library(ggplot2)
+library(readxl)
+library(tidyr)
+library(dplyr)
+source("./source/data_processing.R")
+```
+
+## Exploring Trends in Job Role and Job Satisfaction
+```{r}
+#seperate data into only current employees
+CurrentEmployees <- analysis_df[analysis_df$Attrition=="No",]
+SatisAnalysis <- data.frame('Department' = CurrentEmployees$Department, 'JobRole' = CurrentEmployees$JobRole, 'JobSatisfaction' = CurrentEmployees$JobSatisfaction)
+#manager overlaps in department, so add department to distinguish 
+SatisAnalysis <- transform(SatisAnalysis, JobRole = ifelse(JobRole == 'Manager' , paste(JobRole, Department, sep = ",") , as.character(JobRole)))
+#find count of Job Satisfactions within job role
+SatisAnalysis <- data.frame(table(SatisAnalysis$JobRole, SatisAnalysis$JobSatisfaction, SatisAnalysis$Department))
+colnames(SatisAnalysis) <- c("Role", "Satisfaction", "Department", "Freq")
+#Get rid of observations without recordings
+SatisAnalysis <- SatisAnalysis[ ! SatisAnalysis$Freq==0, ] 
+#change counts to percentages
+SatisAnalysis <- SatisAnalysis %>% 
+  group_by(Role) %>% 
+  mutate(perc=Freq/sum(Freq))  
+SatisAnalysis$perc <- SatisAnalysis$perc*100
+#plot percentages and seperate by department
+ggplot(SatisAnalysis, aes(x= Role, y=perc)) + 
+  coord_flip() + 
+  ggtitle("Job Satisfaction by Job Role") +
+  facet_grid(Department~., scales = "free", space = "free") +
+  theme(strip.text.x = element_text(angle = 0)) +
+  theme(plot.title = element_text(hjust = 0.5)) + 
+  geom_bar(aes(fill=Satisfaction), stat="identity", position = "dodge", colour = "black") + 
+  labs(x= "Job Role", y= "Percentage Satisfaction")  + 
+  scale_y_continuous(expand = c(0,0), limits = c(0,45)) +
+  scale_fill_manual(values=c("yellow", "orange", "red" , "red4") , labels=c("Low", "Medium", "High", "Very High"))
+#run to see if differences are statistically significant
+chisq.test(table(CurrentEmployees$JobRole, CurrentEmployees$JobSatisfaction))
+```
+From this bar graph we can see that Sales Executives are the most satisfied in their jobs. Alternatively, Research and Development Managers are the least satisfied in their jobs. A statistical test was performed to see if these findings were statistically significant, but it was determined job role and job satisfaction are not dependent on each other. The p-value is pretty high, so it may not be looking into further.
+
+## Exploring Environment within Departments
+```{r}
+#get counts
+EnvironAnalysis <- data.frame(table(CurrentEmployees$Department, CurrentEmployees$EnvironmentSatisfaction))
+colnames(EnvironAnalysis) <- c("Department", "Satisfaction","Freq")
+#get percentages 
+EnvironAnalysis <- EnvironAnalysis %>% 
+  group_by(Department) %>% 
+  mutate(perc=Freq/sum(Freq))
+#plot frequencies
+ggplot(EnvironAnalysis, aes(x= Department, y=perc)) + 
+  coord_flip() + 
+  ggtitle("Environment Satisfaction by Department") + 
+  theme(plot.title = element_text(hjust = 0.5)) + 
+  geom_bar(aes(fill=Satisfaction), stat="identity", position = "dodge") + 
+  labs(x= "Department", y= "Percentage Satisfaction")  + 
+  scale_y_continuous(expand = c(0,0), limits = c(0,0.50)) +
+  scale_fill_manual(values=c("yellow", "orange", "red" , "red4") , labels=c("Low", "Medium", "High", "Very High"))
+#check if statistically significant
+chisq.test(table(CurrentEmployees$Department, CurrentEmployees$EnvironmentSatisfaction))
+```
+From this bar graph we can see that Research are the most satisfied in their jobs. However, Human Resources has a very high percentage of employees with high satisfaction. Alternatively, Research and Development has the highest percentage of employees with low satisfaction. A statistical test was performed to see if these findings were statistically significant, but it was determined environment satisfaction and department are not dependent on each other. However, it might be worth looking into further as the p-value isn't extreme.
+
+
+## Exploring Trends in Job Involvement and Job Role
+```{r}
+InvolvAnalysis <- data.frame(table(CurrentEmployees$JobRole, CurrentEmployees$JobInvolvement, CurrentEmployees$Department))
+#Seperate Manager into Departments
+InvolvAnalysis <- transform(InvolvAnalysis, Var1 = ifelse(Var1 == 'Manager' , paste(Var1, Var3, sep = ",") , as.character(Var1)))
+InvolvAnalysis <- InvolvAnalysis[ ! InvolvAnalysis$Freq==0, ]
+#plot frequencies
+InvolvAnalysis <- InvolvAnalysis %>% 
+  group_by(Var1) %>% 
+  mutate(perc=Freq/sum(Freq))
+InvolvAnalysis$perc <- InvolvAnalysis$perc *100
+#plot frequencies
+ggplot(InvolvAnalysis, aes(x= Var1, y=perc)) + 
+  ggtitle("Job Involvement by Job Role") + 
+  theme(plot.title = element_text(hjust = 0.5)) + 
+  geom_bar(aes(fill=Var2), stat="identity", position = "dodge" ,     colour="black") + 
+  labs(x= "Job Role", y= "Percentage Involvement")  + 
+  scale_y_continuous(expand = c(0,0), limits = c(0,75)) +
+  scale_fill_manual(values=c("yellow", "orange", "red" , "red4"),   labels=c("Low", "Medium", "High", "Very High")) +
+  facet_grid(Var3~.) +
+  coord_flip() +
+  facet_grid(Var3~., scales = "free", space = "free") +
+  theme(strip.text.x = element_text(angle = 0)) 
+#check if statistically significant
+chisq.test(table(analysis_df$JobRole, analysis_df$JobInvolvement))
+```
+Overall, all jobs have a high job involvement percentage. The least involved job is laboratory technitian at 6.6% employees with low involvement. I would not further look into this as it is not statistically significant.
+
+# Exploring Trends With Job Satisfaction and Education
+```{r}
+#get dataframe with counts
+EducationSat=as.data.frame(table(CurrentEmployees$Education,CurrentEmployees$JobSatisfaction,dnn=list("Education","Satisfaction")))
+#get percentages
+EducationSat <- EducationSat %>% 
+  group_by(Education) %>% 
+  mutate(perc=Freq/sum(Freq))
+EducationSat$perc <- EducationSat$perc*100
+#plot percentages 
+ggplot(EducationSat, aes(x= Education, y=perc)) + 
+  ggtitle("Job Satisfaction by Education") + 
+  theme(plot.title = element_text(hjust = 0.5)) + 
+  geom_bar(aes(fill=Satisfaction),stat="identity", position = "dodge",     colour="black") + 
+  labs(x= "Education Level", y= "Percentage Satisfaction")  + 
+  scale_y_continuous(expand = c(0,0), limits = c(0,75)) +
+  coord_flip() +
+  theme(strip.text.x = element_text(angle = 0)) +
+  scale_fill_manual(values=c("yellow", "orange", "red" , "red4") , labels=c("Low", "Medium", "High", "Very High"))
+
+#check if statistically significant
+chisq.test(table(CurrentEmployees$Education, CurrentEmployees$JobSatisfaction))
+```
+From this barplot we can see that employees with Doctorates are the most unhappy in their job. This is not statistically significant so you cannot conclude having a doctorate degree is why they are unhappy.
+
+## Exploring Trends with Education Level Within Job Roles
+```{r}
+EduAnalysis <- data.frame('Department' = CurrentEmployees$Department, 'JobRole' = CurrentEmployees$JobRole, 'Education' = CurrentEmployees$Education)
+#manager overlaps in department, so add department to distinguish 
+EduAnalysis <- transform(EduAnalysis, JobRole = ifelse(JobRole == 'Manager' , paste(JobRole, Department, sep = ",") , as.character(JobRole)))
+#find count of Job Satisfactions within job role
+EduAnalysis <- data.frame(table(EduAnalysis$JobRole, EduAnalysis$Education, EduAnalysis$Department))
+colnames(EduAnalysis) <- c("Role", "Education", "Department", "Freq")
+EduAnalysis <- EduAnalysis[ ! EduAnalysis$Freq==0, ]   
+#change counts to percentages
+EduAnalysis <- EduAnalysis %>% 
+  group_by(Role) %>% 
+  mutate(perc=Freq/sum(Freq))  
+EduAnalysis$perc <- EduAnalysis$perc*100
+#plot counts
+ggplot(EduAnalysis, aes(x= Role, y=perc)) + 
+  coord_flip() + 
+  ggtitle("Education by Job Role") +
+  facet_grid(Department~., scales = "free", space = "free") +
+  theme(strip.text.x = element_text(angle = 0)) +
+  theme(plot.title = element_text(hjust = 0.5)) + 
+  geom_bar(aes(fill=Education), stat="identity", position = "dodge", colour = "black", width=0.4) + 
+  labs(x= "Job Role", y= "Education Percentage")  + 
+  scale_y_continuous(expand = c(0,0), limits = c(0,50)) +
+  scale_fill_manual(values=c("yellow", "limegreen", "deeppink" , "blue", "darkred")) 
+
+chisq.test(table(CurrentEmployees$Education, CurrentEmployees$JobRole))
+```
+The majority of the employees has a Bachelor's degree. Human Resouce Managers have the highest percentage of employees with Master's degrees. Sales Representatives have the highest percentage with below college educations at 26%.
+
+# Trends with Work Life Balance by Job Role
+```{r}
+WorkAnalysis <- data.frame(table(CurrentEmployees$JobRole, CurrentEmployees$WorkLifeBalance, CurrentEmployees$Department))
+WorkAnalysis <- transform(WorkAnalysis, Var1 = ifelse(Var1 == 'Manager' , paste(Var1, Var3, sep = ",") , as.character(Var1)))
+
+colnames(WorkAnalysis) <- c("JobRole", "WorkLifeBalance","Department" , "Freq")
+WorkAnalysis <- WorkAnalysis[ ! WorkAnalysis$Freq==0, ]   
+#change counts to percentages
+WorkAnalysis <- WorkAnalysis %>% 
+  group_by(JobRole) %>% 
+  mutate(perc=Freq/sum(Freq))  
+WorkAnalysis$perc <- WorkAnalysis$perc*100
+
+ggplot(WorkAnalysis, aes(x= JobRole, y=perc)) + 
+  coord_flip() + 
+  ggtitle("Work Life Balance by Job Roles") +
+  facet_grid(Department~., scales = "free", space = "free") +
+  theme(strip.text.x = element_text(angle = 0)) +
+  theme(plot.title = element_text(hjust = 0.5)) + 
+  geom_bar(aes(fill=WorkLifeBalance), stat="identity", position = "dodge", colour = "black", width=0.4) + 
+  labs(x= "Job Role", y= "Percent in Level")  + 
+  scale_y_continuous(expand = c(0,0), limits = c(0,100)) +
+  scale_fill_manual(values=c("yellow", "orange", "red" , "red4"))
+```
+The employees seem to have a high 
+
+
+## Exploring Trends with Education Level and Monthly Income
+```{r}
+ggplot(data=CurrentEmployees,aes(x= Education,y=MonthlyIncome)) + 
+  geom_boxplot(fill = "white", outlier.colour = "red", colour = "blue") +
+  coord_flip() + 
+  ggtitle("Monthly Income by Education Level")
+```
+Employees with Doctorate Degree's have the highest median monthly income, while below college has the lowest median monthly salary. This is consisent with society's expectation of more education, more pay. Note there are outliers in every education level besides doctor, this is most likely due to those employees being at the company longer.
+
+
+
+
+
+
+
+#Trends with Years at Company and Monthly Income
+```{r}
+qplot(YearsAtCompany, MonthlyIncome, colour = Education, shape = Department, data = CurrentEmployees)
+```
+
+
+
+
+
+
+
+
+#Trends with Education Level and Monthly Income
+```{r}
+ggplot(data=CurrentEmployees,aes(x= JobSatisfaction,y=MonthlyIncome)) + 
+  geom_boxplot(fill = "white", outlier.colour = "red", colour = "blue") +
+  coord_flip() + 
+  ggtitle("Monthly Income by Education Level")
+```
+There is not a noticeable difference between median monthly income and job satisfaction levels. This leads us to conclude the more an employee is paid does not mean they will necessarily have a higher job satisfaction.
+
+# Trends wih Job Role and Years in Current Role
+```{r}
+ggplot(data=CurrentEmployees,aes(x= JobRole,y=YearsInCurrentRole)) + 
+  geom_boxplot(fill = "white", outlier.colour = "red", colour = "blue") +
+  coord_flip() + 
+  ggtitle("Job Role and Number of Companies Worked") +
+  scale_y_continuous(expand = c(0,0), limits = c(0,20))
+```
+Research Directors and Managers have the highest median years in current role, which means they tend to have worked at the company the longest. Sale Representatives, Library Technicians and Human Resources tend to have worked at the company the shortest amount of time. As we found out by exploring attrition rates, this is because their attrition rate is significantly higher than other roles. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Exploring Trends with Attrition
+```{r}
+#Salary difference between income by attrition
+t.test(MonthlyIncome~Attrition, data=analysis_df)
+#Total Working Years and Monthly salary
+t.test(MonthlyIncome~PerformanceRating, data=analysis_df)
+#Years with Manager and Attrition
+t.test(YearsWithCurrManager~Attrition, data = analysis_df)
+#Years since promotion and attrition
+t.test(YearsSinceLastPromotion~Attrition, data = analysis_df)
+#Difference in Working Years and Attrition
+t.test(TotalWorkingYears~Attrition, data = analysis_df)
+#Difference in companies worked and attrition
+t.test(NumCompaniesWorked~Attrition, data = analysis_df)
+#Difference in years in current role and attrition
+t.test(YearsInCurrentRole~Attrition, data = analysis_df)
+#Job level and attrition
+t.test(JobLevel~Attrition, data = analysis_df)
+```
+
+
+
+
+
+```{r}
+summary(CurrentEmployees)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
