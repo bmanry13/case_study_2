@@ -11,6 +11,10 @@ This project uses exploratory data analysis to determine the top three factors t
  2. Download and install the libraries
  3. Load the packages
 
+## Summary of Findings:
+1. The top five variables for determining attrition are: overtime, stock option level, job role, job level and years with current manager
+2. Sales Representatives have the highest rate of attrition (the most likely to leave the Company)
+3. Research and Development employees are the most satisfied in their jobs.
 
 ## Contributors: 
 Brychan Manry,Patricia Goresen, and Bradley Robinson
