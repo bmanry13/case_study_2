@@ -177,8 +177,30 @@ ggplot(WorkAnalysis, aes(x= JobRole, y=perc)) +
   scale_y_continuous(expand = c(0,0), limits = c(0,100)) +
   scale_fill_manual(values=c("yellow", "orange", "red" , "red4"))
 ```
-The employees seem to have a high 
+The majority of employees have a 'better' work life balance.The job nor department seems to make a difference.
 
+## Exploring Trends with Business Travel and Job Satisfaction
+```{r}
+TravelAnalysis <- data.frame(table(CurrentEmployees$BusinessTravel, CurrentEmployees$JobSatisfaction))
+colnames(TravelAnalysis) <- c("Travel", "Satisfaction" , "Freq")
+TravelAnalysis <- TravelAnalysis[ ! TravelAnalysis$Freq==0, ]   
+#change counts to percentages
+TravelAnalysis <- TravelAnalysis %>% 
+  group_by(Travel) %>% 
+  mutate(perc=Freq/sum(Freq))  
+TravelAnalysis$perc <- TravelAnalysis$perc*100
+
+ggplot(TravelAnalysis, aes(x= Travel, y=perc)) + 
+  coord_flip() + 
+  ggtitle("Job Satisfaction by Travel Amounts") +
+  theme(strip.text.x = element_text(angle = 0)) +
+  theme(plot.title = element_text(hjust = 0.5)) + 
+  geom_bar(aes(fill=Satisfaction), stat="identity", position = "dodge", colour = "black", width=0.4) + 
+  labs(x= "Travel Frequency", y= "Percent Satisfaction")  + 
+  scale_y_continuous(expand = c(0,0), limits = c(0,100)) +
+  scale_fill_manual(values=c("yellow", "orange", "red" , "red4"))
+```
+There does not seem to be much difference in travel frequency and job satisfaction however, employees who travel rarely do have the highest percentage of low satisfaction.
 
 ## Exploring Trends with Education Level and Monthly Income
 ```{r}
@@ -189,23 +211,11 @@ ggplot(data=CurrentEmployees,aes(x= Education,y=MonthlyIncome)) +
 ```
 Employees with Doctorate Degree's have the highest median monthly income, while below college has the lowest median monthly salary. This is consisent with society's expectation of more education, more pay. Note there are outliers in every education level besides doctor, this is most likely due to those employees being at the company longer.
 
-
-
-
-
-
-
 #Trends with Years at Company and Monthly Income
 ```{r}
 qplot(YearsAtCompany, MonthlyIncome, colour = Education, shape = Department, data = CurrentEmployees)
 ```
-
-
-
-
-
-
-
+There is not a strong relationship between years at the company and monthly income-- factoring in income does not seem to explain the huge amount of outliers either.
 
 #Trends with Education Level and Monthly Income
 ```{r}
@@ -226,20 +236,6 @@ ggplot(data=CurrentEmployees,aes(x= JobRole,y=YearsInCurrentRole)) +
 ```
 Research Directors and Managers have the highest median years in current role, which means they tend to have worked at the company the longest. Sale Representatives, Library Technicians and Human Resources tend to have worked at the company the shortest amount of time. As we found out by exploring attrition rates, this is because their attrition rate is significantly higher than other roles. 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 # Exploring Trends with Attrition
 ```{r}
 #Salary difference between income by attrition
@@ -256,19 +252,27 @@ t.test(TotalWorkingYears~Attrition, data = analysis_df)
 t.test(NumCompaniesWorked~Attrition, data = analysis_df)
 #Difference in years in current role and attrition
 t.test(YearsInCurrentRole~Attrition, data = analysis_df)
-#Job level and attrition
-t.test(JobLevel~Attrition, data = analysis_df)
 ```
-
-
-
+There is a statistically significant difference between income levels and their attrition rates. 
+There is a statistically significant difference between years with manager and their attrition rates.
+There is a statistically significant difference between years working and their attrition rates.
+There is a statistically significant difference between years in current role and their attrition rates.
 
 
 ```{r}
 summary(CurrentEmployees)
 ```
-
-
+Highlights:
+There are currently 1,233 employees we have data for.
+The Research and Development Department is the largest, comprising of 67.2% of the employees.
+69.3% of employees have obtained a Bachelor's Degree or higher.
+About 17.2% of employees have a low environment satisfaction.
+The median hourly rate is 65.95-- this seems relatively low since the daily rate is $817.
+Only 4.5% of employees have a low job involvement, while 60.3% of employees have high job involvement.
+18.1% of employees have low job satisfaction.
+Most employees do not have to work overtime(80.1%).
+The median training times last year was three hours.
+Employees get promoted almost every year-- the median years since last promotion is one.
 
 
 
