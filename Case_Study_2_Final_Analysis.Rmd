@@ -1,0 +1,591 @@
+---
+title: "Case_Study_2"
+author: "Patricia Goresen Brychan Manry Bradley Robinson"
+date: "12/7/2017"
+output: 
+  html_document:
+    keep_md: TRUE
+---
+# DDSAnalytics Talent Management Assessment
+## Goals:
+* Determine the top factors that lead to employee attrition
+* Identify trends within job roles that might exist in the data
+* Discover Employee Demographics
+## About the Data:
+* There are 35 separate variables, including attrition
+* Variables that should be excluded for legal reasons: Age, Gender and Marital Status
+* Some Variables have little or no information so are discarded: Employee Number, Over 18, Standard Hours
+
+# Finding Influential Variables That Lead to Attrition
+### Process Overview
+1. Collinearity Assessment
+2. Univariate Modeling
+3. Machine Learning
+4. Determine Top-Variables Across Methods
+
+```{r, include=FALSE}
+library(dplyr)
+library(gbm)
+library(randomForest)
+library(tidyr)
+library(ggplot2)
+```
+
+### Collinearity Assessment 
+```{r}
+source("./source/data_processing.R")
+
+#=== CHECK POTENTIAL COLINEARITY ====#
+cor_matrix <- cor(analysis_df %>% mutate(Attrition = as.numeric(Attrition == "Yes")) %>% select_if(is.numeric))
+max(cor_matrix[cor_matrix < 1 & cor_matrix > -1])
+
+corrplot::corrplot(cor_matrix)
+
+
+#=== ARE SOME FACTOR LEVELS TOO SMALL? SHOULD WE GROUP TO OTHER? 
+
+x <- lapply(analysis_df %>% select_if(is.factor), function(x) min(prop.table(table(x))))
+x[x<.05]
+
+```
+Some variables show some pairwise correlation, however none of the correlations are high enough to require variable removal since our variable identification methods are robust to collinearity
+
+### Univariate Model Testing
+```{r}
+#-- Logit All Variables --
+uni_models_list <- lapply(names(analysis_df[, -1]), function(curVar){
+  model_df <- data.frame(y = analysis_df$Attrition == "Yes")
+  model_df[curVar] <- analysis_df[[curVar]]
+  summary(glm(formula(paste("y ~ ", curVar)), model_df, family = binomial(link = "logit")))
+})
+names(uni_models_list) <- names(analysis_df[, -1])
+uni_models_list
+top_logit <- sort(sapply(uni_models_list, function(x) x$aic))
+top_logit <- names(head(top_logit,5))
+
+#-- Categorical Chi-Square Testing
+chi_sq_list <- lapply(names(analysis_df[, -1] %>% select_if(is.factor)),  function(curVar){
+  tbl <- table(analysis_df[[curVar]], analysis_df$Attrition)
+  print(curVar)
+  print(tbl)
+  chisq.test(tbl)
+})
+names(chi_sq_list) <- names(analysis_df[, -1] %>% select_if(is.factor))
+chi_sq_list
+top_chi <- sort(sapply(chi_sq_list, function(x) x$p.value))
+top_chi <- names(head(top_chi,5))
+```
+Top five variables from Logit:
+1. Overtime
+2. Job Role
+3. Job Level
+4. Stock Option Level
+5. Total Working Years
+Top five variables from Chi-Square:
+1. Overtime
+2. Job Role
+3. Job Level
+4. Stock Option Level 
+5. Job Involvement
+
+### Machine Learning 
+```{r}
+## GRADIENT BOOSTING VARIABLE IDENTIFICATION
+gbm_model <- gbm.fit(as.data.frame(analysis_df[,-1]), analysis_df$Attrition == "Yes")
+gbm_model
+summary(gbm_model)
+top_gbm <- as.character(head(summary(gbm_model)$var,5))
+
+
+#=== RANDOM FOREST VARIABLE IDENTIFICATION ====#
+
+
+rf_model <- randomForest(x = as.data.frame(analysis_df[,-1]), y = analysis_df$Attrition , importance = TRUE)
+rf_model
+varImpPlot(rf_model)
+importance(rf_model)
+top_rf <- names(tail(sort(importance(rf_model)[,3]),5))
+
+all_top <- unique(c(top_logit, top_chi, top_gbm, top_rf))
+```
+Top Five Variables from Random Forest:
+1. Overtime
+2. Monthly Income
+3. Job Role
+4. Total Working Years 
+5. Stock Option Level
+Top Five Variables from GBM:
+1. Overtime
+2.Total Working Years 
+3. Monthly Income
+3. Job Role
+4. Years with Current Manager
+5. Stock Option Level
+6. Job Role
+
+### Top Variables Across Methods
+```{r}
+summary(glm("Attrition ~ .", data = analysis_df[c("Attrition",all_top)] %>% mutate(Attrition = Attrition == "Yes"), family = binomial(link = "logit")))
+summary(lm("Attrition ~ .", data = analysis_df[c("Attrition",all_top)] %>% mutate(Attrition = Attrition == "Yes")))
+```
+### Conclusion:
+By creating a model with all variables included and using AIC to stepwise backwards remove variables from the model we can reduce to total number to five:
+1. Overtime
+2. Stock Option Level
+3. Job Role
+4. Job Level
+5. Years with current manager
+
+### Some Highlight Insights:
+* If an employee is required to work overtime they are nearly five times more likely to leave the company
+* Once an employee reaches job level 2 they are around four times less likely to leave
+* The addition stock options reduces the likelihood of an employee leaving by two to four times compared to employees with no stock option
+
+# Attrition Rate Factors
+```{r}
+analysis_df$Attrition <- analysis_df$Attrition == "Yes"
+attrition <- length(analysis_df$Attrition[analysis_df$Attrition])
+non_attrition <- length(analysis_df$Attrition[!analysis_df$Attrition])
+attrition/(non_attrition+attrition)
+```
+So about 16% of employees are lost. This tells us that, if we find any rates higher than .16, it might be worth a further look.
+
+### Looking at Different Columns
+
+Let's start with distance from home, and see how that might relate to attrition rates:
+
+```{r}
+attrition_rate_distance <- analysis_df %>%
+  group_by(DistanceFromHome) %>%
+  count(att_count = Attrition) %>%
+  group_by(att_count)
+  
+attrition_rate_true <- attrition_rate_distance[attrition_rate_distance$att_count,]
+attrition_rate_false <- attrition_rate_distance[!attrition_rate_distance$att_count,]
+attrition_rate_distance <- merge(attrition_rate_true, attrition_rate_false, by = "DistanceFromHome")
+attrition_rate_distance <- attrition_rate_distance %>%
+  mutate(AttRate = n.x / (n.x + n.y))
+attrition_rate_distance
+```
+
+```{r}
+ggplot(attrition_rate_distance) +
+  geom_col(mapping = aes(x = DistanceFromHome, y = AttRate), fill = "blue") + ggtitle("The Closer To Home, The Lower the Attrition Rate")
+```
+Looking at that graph, it appears that there are some extremely high attrition rates for some distances, and the general pattern is, that, as the distance increases, so does the attrition rate.
+
+
+Now, let's look at education:
+
+```{r}
+attrition_rate_education <- analysis_df %>%
+  group_by(Education) %>%
+  count(att_count = Attrition) %>%
+  group_by(att_count)
+  
+attrition_rate_true <- attrition_rate_education[attrition_rate_education$att_count,]
+attrition_rate_false <- attrition_rate_education[!attrition_rate_education$att_count,]
+head(attrition_rate_true)
+head(attrition_rate_false)
+attrition_rate_education <- merge(attrition_rate_true, attrition_rate_false, by = "Education")
+attrition_rate_education <- attrition_rate_education %>%
+  mutate(AttRate = n.x / (n.x + n.y))
+attrition_rate_education
+```
+
+```{r}
+ggplot(attrition_rate_education) +
+  geom_col(mapping = aes(x = Education, y = AttRate), fill = "blue") + ggtitle("Education Level Does Not Affect Attrition")
+```
+Education appears to relate to attrition too, an increase in education sees a lower rate of attrition. However, nothing is extremely high, and education might be due to a secondary influence.
+
+Let's continue and create a function to do this analysis:
+```{r}
+att_rate <- function(analysis_df, grouper) {
+  attrition_rate_grouped <- analysis_df %>%
+    group_by_(grouper) %>%
+    count(att_count = Attrition) %>%
+    group_by(att_count)
+   
+  attrition_rate_true <- attrition_rate_grouped[attrition_rate_grouped$att_count,]
+  attrition_rate_false <- attrition_rate_grouped[!attrition_rate_grouped$att_count,]
+  attrition_rate_grouped <- merge(attrition_rate_true, attrition_rate_false, by = grouper)
+  attrition_rate_grouped <- attrition_rate_grouped %>%
+     mutate(AttRate = n.x / (n.x + n.y))
+  attrition_rate_grouped
+}
+# Just test it out to make sure it works
+education <- att_rate(analysis_df, "Education")
+head(education)
+```
+
+```{r}
+names(analysis_df)
+```
+Here are just a few more examples:
+```{r}
+hourly_att <- att_rate(analysis_df, "HourlyRate")
+head(hourly_att)
+role_att <- att_rate(analysis_df, "JobRole")
+head(role_att)
+performance_att <- att_rate(analysis_df, "PerformanceRating")
+performance_att
+```
+We can rule out performance rating, since it has so few variables it would be impossible to interpret.
+
+```{r}
+exclude_names <- c("Age", "Gender", "Attrition", "Over18", "EmployeeNumber", "EmployeeCount", "StandardHours")
+names_use <- names(analysis_df)[!names(analysis_df) %in% exclude_names]
+# A number of these graphs do not provide useful information because of the data format
+ugly_graphs <- c("")
+
+att_differences <- c("DailyRate", "MonthlyIncome", "MonthlyRate")
+# TODO: remove the graphs that are ugly
+for (name in names_use) {
+  name_title_split <- regmatches(name, gregexpr("[A-Z]+[a-z]+", name, perl = T))
+  name_title <- paste(name_title_split[[1]], collapse = " ")
+  name_att <- att_rate(analysis_df, name)
+  max_att <- max(name_att$AttRate)
+  min_att <- min(name_att$AttRate)
+  att_diff <- max_att - min_att
+  att_differences <- c(att_differences, att_diff)
+  plot_title <- paste(c("Attrition Rate by ", name_title), collapse = "")
+plot <- ggplot(name_att) +
+    geom_col(mapping = aes_string(x = name, y = "AttRate"), fill = "blue") +
+    labs(x = name_title, y = "Attrition Rate") +
+    ggtitle(plot_title) +
+    coord_flip()
+  print(plot)
+  file_name <- paste(c("../case_study_extra/graphs/", name, ".png"), collapse = "")
+  ggsave(file_name)
+}
+att_differences
+```
+
+Looking at time based data points (such as years in a job, etc. ), there is an interesting pattern that emerges. The number of years someone has been doing something tends to correlate with a decrease in attrition. However, at highest amount of years, there tends to be an increase. This may, however be due to retirement.
+
+Other interesting patterns:
+
+### Sales
+In the graph of positions, the sales representative postion has a very high attrition rate (near 40%), as well as the sales department having a high attrition rate (21%) compared to other departments.
+
+### Role Involvement
+Steps to improve an employees sense of belonging in a particular position tend to decrease attrition. For example, there is a negative correlation between training times in the last year and attrition rate. And job involvement ratings show a dramatic decrease in attrition (1 = 34%, and the max 4 = 9%)
+
+### Money Matters
+Stock options tend to decrease attrition, however, the highest sees a spike in attrition again. This might be an indication that those with the best stock options tend to be highly desirable employees and thus are at a greater risk of being offered a higher paying position.
+
+### Misc
+Being a manager is appealing: managers have a very low attrition rate (5%), but not quite as appealing as being a research director (2%). Research director positions are so rare, however that it might be more difficult to transfer to another organization with a similar role.
+
+### Chi-Squared Test for Independence
+Now that we've looked at the graphs, we can start taking a look at what values are related to attrition with a statistical method.
+
+```{r}
+significant_variables <- c()
+analysis_df <- data.frame(unclass(analysis_df))
+for (name in names_use) {
+  tbl <- table(analysis_df[, "Attrition"], analysis_df[, name])
+  print(name)
+  test_result <- chisq.test(tbl) 
+  if (test_result$p.value < .05) {
+    print(test_result)
+    significant_variables <- c(significant_variables, name)
+  } else {
+    print(test_result$p.value)
+    print("Did not pass threshold")
+  }
+}
+significant_variables
+```
+
+```{r}
+length(significant_variables)
+length(names_use)
+```
+
+### Differences between attrition rates
+```{r}
+attrition_diff_df <- data.frame(names_use, att_differences)
+attrition_diff_df
+```
+```{r}
+attrition_ordered <- attrition_diff_df[order(-attrition_diff_df$att_differences),]
+attrition_ordered
+```
+
+Most of the top attrition rate differences are listed in the significant variables. Daily rate, though, is not. This may be due to the large distribution of values in daily rate, which means that the influence may have been missed.
+
+## Explore trends that exist in current employees
+```{r}
+#seperate data into only current employees
+CurrentEmployees <- analysis_df[analysis_df$Attrition=="No",]
+SatisAnalysis <- data.frame('Department' = CurrentEmployees$Department, 'JobRole' = CurrentEmployees$JobRole, 'JobSatisfaction' = CurrentEmployees$JobSatisfaction)
+#manager overlaps in department, so add department to distinguish 
+SatisAnalysis <- transform(SatisAnalysis, JobRole = ifelse(JobRole == 'Manager' , paste(JobRole, Department, sep = ",") , as.character(JobRole)))
+#find count of Job Satisfactions within job role
+SatisAnalysis <- data.frame(table(SatisAnalysis$JobRole, SatisAnalysis$JobSatisfaction, SatisAnalysis$Department))
+colnames(SatisAnalysis) <- c("Role", "Satisfaction", "Department", "Freq")
+#Get rid of observations without recordings
+SatisAnalysis <- SatisAnalysis[ ! SatisAnalysis$Freq==0, ] 
+#change counts to percentages
+SatisAnalysis <- SatisAnalysis %>% 
+  group_by(Role) %>% 
+  mutate(perc=Freq/sum(Freq))  
+SatisAnalysis$perc <- SatisAnalysis$perc*100
+#plot percentages and seperate by department
+ggplot(SatisAnalysis, aes(x= Role, y=perc)) + 
+  coord_flip() + 
+  ggtitle("Job Satisfaction by Job Role") +
+  facet_grid(Department~., scales = "free", space = "free") +
+  theme(strip.text.x = element_text(angle = 0)) +
+  theme(plot.title = element_text(hjust = 0.5)) + 
+  geom_bar(aes(fill=Satisfaction), stat="identity", position = "dodge", colour = "black") + 
+  labs(x= "Job Role", y= "Percentage Satisfaction")  + 
+  scale_y_continuous(expand = c(0,0), limits = c(0,45)) +
+  scale_fill_manual(values=c("yellow", "orange", "red" , "red4") , labels=c("Low", "Medium", "High", "Very High"))
+#run to see if differences are statistically significant
+chisq.test(table(CurrentEmployees$JobRole, CurrentEmployees$JobSatisfaction))
+```
+From this bar graph we can see that Sales Executives are the most satisfied in their jobs. Alternatively, Research and Development Managers are the least satisfied in their jobs. A statistical test was performed to see if these findings were statistically significant, but it was determined job role and job satisfaction are not dependent on each other. The p-value is pretty high, so it may not be looking into further.
+
+### Exploring Environment within Departments
+```{r}
+#get counts
+EnvironAnalysis <- data.frame(table(CurrentEmployees$Department, CurrentEmployees$EnvironmentSatisfaction))
+colnames(EnvironAnalysis) <- c("Department", "Satisfaction","Freq")
+#get percentages 
+EnvironAnalysis <- EnvironAnalysis %>% 
+  group_by(Department) %>% 
+  mutate(perc=Freq/sum(Freq))
+#plot frequencies
+ggplot(EnvironAnalysis, aes(x= Department, y=perc)) + 
+  coord_flip() + 
+  ggtitle("Environment Satisfaction by Department") + 
+  theme(plot.title = element_text(hjust = 0.5)) + 
+  geom_bar(aes(fill=Satisfaction), stat="identity", position = "dodge") + 
+  labs(x= "Department", y= "Percentage Satisfaction")  + 
+  scale_y_continuous(expand = c(0,0), limits = c(0,0.50)) +
+  scale_fill_manual(values=c("yellow", "orange", "red" , "red4") , labels=c("Low", "Medium", "High", "Very High"))
+#check if statistically significant
+chisq.test(table(CurrentEmployees$Department, CurrentEmployees$EnvironmentSatisfaction))
+```
+From this bar graph we can see that Research are the most satisfied in their jobs. However, Human Resources has a very high percentage of employees with high satisfaction. Alternatively, Research and Development has the highest percentage of employees with low satisfaction. A statistical test was performed to see if these findings were statistically significant, but it was determined environment satisfaction and department are not dependent on each other. However, it might be worth looking into further as the p-value isn't extreme.
+
+
+### Exploring Trends in Job Involvement and Job Role
+```{r}
+InvolvAnalysis <- data.frame(table(CurrentEmployees$JobRole, CurrentEmployees$JobInvolvement, CurrentEmployees$Department))
+#Seperate Manager into Departments
+InvolvAnalysis <- transform(InvolvAnalysis, Var1 = ifelse(Var1 == 'Manager' , paste(Var1, Var3, sep = ",") , as.character(Var1)))
+InvolvAnalysis <- InvolvAnalysis[ ! InvolvAnalysis$Freq==0, ]
+#plot frequencies
+InvolvAnalysis <- InvolvAnalysis %>% 
+  group_by(Var1) %>% 
+  mutate(perc=Freq/sum(Freq))
+InvolvAnalysis$perc <- InvolvAnalysis$perc *100
+#plot frequencies
+ggplot(InvolvAnalysis, aes(x= Var1, y=perc)) + 
+  ggtitle("Job Involvement by Job Role") + 
+  theme(plot.title = element_text(hjust = 0.5)) + 
+  geom_bar(aes(fill=Var2), stat="identity", position = "dodge" ,     colour="black") + 
+  labs(x= "Job Role", y= "Percentage Involvement")  + 
+  scale_y_continuous(expand = c(0,0), limits = c(0,75)) +
+  scale_fill_manual(values=c("yellow", "orange", "red" , "red4"),   labels=c("Low", "Medium", "High", "Very High")) +
+  facet_grid(Var3~.) +
+  coord_flip() +
+  facet_grid(Var3~., scales = "free", space = "free") +
+  theme(strip.text.x = element_text(angle = 0)) 
+#check if statistically significant
+chisq.test(table(analysis_df$JobRole, analysis_df$JobInvolvement))
+```
+Overall, all jobs have a high job involvement percentage. The least involved job is laboratory technitian at 6.6% employees with low involvement. I would not further look into this as it is not statistically significant.
+
+### Exploring Trends With Job Satisfaction and Education
+```{r}
+#get dataframe with counts
+EducationSat=as.data.frame(table(CurrentEmployees$Education,CurrentEmployees$JobSatisfaction,dnn=list("Education","Satisfaction")))
+#get percentages
+EducationSat <- EducationSat %>% 
+  group_by(Education) %>% 
+  mutate(perc=Freq/sum(Freq))
+EducationSat$perc <- EducationSat$perc*100
+#plot percentages 
+ggplot(EducationSat, aes(x= Education, y=perc)) + 
+  ggtitle("Job Satisfaction by Education") + 
+  theme(plot.title = element_text(hjust = 0.5)) + 
+  geom_bar(aes(fill=Satisfaction),stat="identity", position = "dodge",     colour="black") + 
+  labs(x= "Education Level", y= "Percentage Satisfaction")  + 
+  scale_y_continuous(expand = c(0,0), limits = c(0,75)) +
+  coord_flip() +
+  theme(strip.text.x = element_text(angle = 0)) +
+  scale_fill_manual(values=c("yellow", "orange", "red" , "red4") , labels=c("Low", "Medium", "High", "Very High"))
+
+#check if statistically significant
+chisq.test(table(CurrentEmployees$Education, CurrentEmployees$JobSatisfaction))
+```
+From this barplot we can see that employees with Doctorates are the most unhappy in their job. This is not statistically significant so you cannot conclude having a doctorate degree is why they are unhappy.
+
+### Exploring Trends with Education Level Within Job Roles
+```{r}
+EduAnalysis <- data.frame('Department' = CurrentEmployees$Department, 'JobRole' = CurrentEmployees$JobRole, 'Education' = CurrentEmployees$Education)
+#manager overlaps in department, so add department to distinguish 
+EduAnalysis <- transform(EduAnalysis, JobRole = ifelse(JobRole == 'Manager' , paste(JobRole, Department, sep = ",") , as.character(JobRole)))
+#find count of Job Satisfactions within job role
+EduAnalysis <- data.frame(table(EduAnalysis$JobRole, EduAnalysis$Education, EduAnalysis$Department))
+colnames(EduAnalysis) <- c("Role", "Education", "Department", "Freq")
+EduAnalysis <- EduAnalysis[ ! EduAnalysis$Freq==0, ]   
+#change counts to percentages
+EduAnalysis <- EduAnalysis %>% 
+  group_by(Role) %>% 
+  mutate(perc=Freq/sum(Freq))  
+EduAnalysis$perc <- EduAnalysis$perc*100
+#plot counts
+ggplot(EduAnalysis, aes(x= Role, y=perc)) + 
+  coord_flip() + 
+  ggtitle("Education by Job Role") +
+  facet_grid(Department~., scales = "free", space = "free") +
+  theme(strip.text.x = element_text(angle = 0)) +
+  theme(plot.title = element_text(hjust = 0.5)) + 
+  geom_bar(aes(fill=Education), stat="identity", position = "dodge", colour = "black", width=0.4) + 
+  labs(x= "Job Role", y= "Education Percentage")  + 
+  scale_y_continuous(expand = c(0,0), limits = c(0,50)) +
+  scale_fill_manual(values=c("yellow", "limegreen", "deeppink" , "blue", "darkred")) 
+
+chisq.test(table(CurrentEmployees$Education, CurrentEmployees$JobRole))
+```
+The majority of the employees has a Bachelor's degree. Human Resouce Managers have the highest percentage of employees with Master's degrees. Sales Representatives have the highest percentage with below college educations at 26%.
+
+### Trends with Work Life Balance by Job Role
+```{r}
+WorkAnalysis <- data.frame(table(CurrentEmployees$JobRole, CurrentEmployees$WorkLifeBalance, CurrentEmployees$Department))
+WorkAnalysis <- transform(WorkAnalysis, Var1 = ifelse(Var1 == 'Manager' , paste(Var1, Var3, sep = ",") , as.character(Var1)))
+
+colnames(WorkAnalysis) <- c("JobRole", "WorkLifeBalance","Department" , "Freq")
+WorkAnalysis <- WorkAnalysis[ ! WorkAnalysis$Freq==0, ]   
+#change counts to percentages
+WorkAnalysis <- WorkAnalysis %>% 
+  group_by(JobRole) %>% 
+  mutate(perc=Freq/sum(Freq))  
+WorkAnalysis$perc <- WorkAnalysis$perc*100
+
+ggplot(WorkAnalysis, aes(x= JobRole, y=perc)) + 
+  coord_flip() + 
+  ggtitle("Work Life Balance by Job Roles") +
+  facet_grid(Department~., scales = "free", space = "free") +
+  theme(strip.text.x = element_text(angle = 0)) +
+  theme(plot.title = element_text(hjust = 0.5)) + 
+  geom_bar(aes(fill=WorkLifeBalance), stat="identity", position = "dodge", colour = "black", width=0.4) + 
+  labs(x= "Job Role", y= "Percent in Level")  + 
+  scale_y_continuous(expand = c(0,0), limits = c(0,100)) +
+  scale_fill_manual(values=c("yellow", "orange", "red" , "red4"))
+```
+The majority of employees have a 'better' work life balance.The job nor department seems to make a difference.
+
+### Exploring Trends with Business Travel and Job Satisfaction
+```{r}
+TravelAnalysis <- data.frame(table(CurrentEmployees$BusinessTravel, CurrentEmployees$JobSatisfaction))
+colnames(TravelAnalysis) <- c("Travel", "Satisfaction" , "Freq")
+TravelAnalysis <- TravelAnalysis[ ! TravelAnalysis$Freq==0, ]   
+#change counts to percentages
+TravelAnalysis <- TravelAnalysis %>% 
+  group_by(Travel) %>% 
+  mutate(perc=Freq/sum(Freq))  
+TravelAnalysis$perc <- TravelAnalysis$perc*100
+
+ggplot(TravelAnalysis, aes(x= Travel, y=perc)) + 
+  coord_flip() + 
+  ggtitle("Job Satisfaction by Travel Amounts") +
+  theme(strip.text.x = element_text(angle = 0)) +
+  theme(plot.title = element_text(hjust = 0.5)) + 
+  geom_bar(aes(fill=Satisfaction), stat="identity", position = "dodge", colour = "black", width=0.4) + 
+  labs(x= "Travel Frequency", y= "Percent Satisfaction")  + 
+  scale_y_continuous(expand = c(0,0), limits = c(0,100)) +
+  scale_fill_manual(values=c("yellow", "orange", "red" , "red4"))
+```
+There does not seem to be much difference in travel frequency and job satisfaction however, employees who travel rarely do have the highest percentage of low satisfaction.
+
+### Exploring Trends with Education Level and Monthly Income
+```{r}
+ggplot(data=CurrentEmployees,aes(x= Education,y=MonthlyIncome)) + 
+  geom_boxplot(fill = "white", outlier.colour = "red", colour = "blue") +
+  coord_flip() + 
+  ggtitle("Monthly Income by Education Level")
+```
+Employees with Doctorate Degree's have the highest median monthly income, while below college has the lowest median monthly salary. This is consisent with society's expectation of more education, more pay. Note there are outliers in every education level besides doctor, this is most likely due to those employees being at the company longer.
+
+### Trends with Years at Company and Monthly Income
+```{r}
+qplot(YearsAtCompany, MonthlyIncome, colour = Education, shape = Department, data = CurrentEmployees)
+```
+There is not a strong relationship between years at the company and monthly income-- factoring in income does not seem to explain the huge amount of outliers either.
+
+### Trends with Education Level and Monthly Income
+```{r}
+ggplot(data=CurrentEmployees,aes(x= JobSatisfaction,y=MonthlyIncome)) + 
+  geom_boxplot(fill = "white", outlier.colour = "red", colour = "blue") +
+  coord_flip() + 
+  ggtitle("Monthly Income by Education Level")
+```
+There is not a noticeable difference between median monthly income and job satisfaction levels. This leads us to conclude the more an employee is paid does not mean they will necessarily have a higher job satisfaction.
+
+### Trends wih Job Role and Years in Current Role
+```{r}
+ggplot(data=CurrentEmployees,aes(x= JobRole,y=YearsInCurrentRole)) + 
+  geom_boxplot(fill = "white", outlier.colour = "red", colour = "blue") +
+  coord_flip() + 
+  ggtitle("Job Role and Number of Companies Worked") +
+  scale_y_continuous(expand = c(0,0), limits = c(0,20))
+```
+Research Directors and Managers have the highest median years in current role, which means they tend to have worked at the company the longest. Sale Representatives, Library Technicians and Human Resources tend to have worked at the company the shortest amount of time. As we found out by exploring attrition rates, this is because their attrition rate is significantly higher than other roles. 
+
+### Exploring Trends with Attrition
+```{r}
+#Salary difference between income by attrition
+t.test(MonthlyIncome~Attrition, data=analysis_df)
+#Total Working Years and Monthly salary
+t.test(MonthlyIncome~PerformanceRating, data=analysis_df)
+#Years with Manager and Attrition
+t.test(YearsWithCurrManager~Attrition, data = analysis_df)
+#Years since promotion and attrition
+t.test(YearsSinceLastPromotion~Attrition, data = analysis_df)
+#Difference in Working Years and Attrition
+t.test(TotalWorkingYears~Attrition, data = analysis_df)
+#Difference in companies worked and attrition
+t.test(NumCompaniesWorked~Attrition, data = analysis_df)
+#Difference in years in current role and attrition
+t.test(YearsInCurrentRole~Attrition, data = analysis_df)
+```
+There is a statistically significant difference between income levels and their attrition rates. 
+There is a statistically significant difference between years with manager and their attrition rates.
+There is a statistically significant difference between years working and their attrition rates.
+There is a statistically significant difference between years in current role and their attrition rates.
+
+```{r}
+summary(CurrentEmployees)
+```
+Highlights:
+* There are currently 1,233 employees we have data for.
+* The Research and Development Department is the largest, comprising of 67.2% of the employees.
+* 69.3% of employees have obtained a Bachelor's Degree or higher.
+* About 17.2% of employees have a low environment satisfaction.
+* The median hourly rate is 65.95-- this seems relatively low since the daily rate is $817.
+* Only 4.5% of employees have a low job involvement, while 60.3% of employees have high job involvement.
+* 18.1% of employees have low job satisfaction.
+* Most employees do not have to work overtime(80.1%).
+* The median training times last year was three hours.
+* Employees get promoted almost every year-- the median years since last promotion is one.
+  
+## Conclusion of Analysis:
+* Recorded data was useful for determining attrition
+* Different methodologies can lead to different conclusions about what variables are most important
+* Combining different measures, we determined that the top 5 variables determining attrition are:
+1. Overtime
+2. Stock Option Level
+3. Job Role
+4. Job Level
+5. Years with current manager
+* We discovered no statistically significant trends that lead to a higher job satisfaction
+
+
+  
