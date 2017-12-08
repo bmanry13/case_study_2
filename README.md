@@ -174,7 +174,8 @@ data.tree::as.Node(data.frame(pathString = paste0("Root/",list.files(recursive =
 ## 96   ¦       °--unnamed-chunk-9-9.png                      
 ## 97   ¦--MakeAnalysis.R                                     
 ## 98   ¦--rawdata                                            
-## 99   ¦   °--CaseStudy2data.zip                             
-## 100  °--... 3 nodes w/ 1 sub
+## 99   ¦   ¦--CaseStudy2data.zip                             
+## 100  ¦   °--... 2 nodes w/ 0 sub                           
+## 101  °--... 3 nodes w/ 3 sub
 ```
 

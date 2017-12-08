@@ -50,18 +50,18 @@ This project uses exploratory data analysis to determine the top three factors t
 * Some Variables have little or no information so are discarded: Employee Number, Over 18, Standard Hours
 
 
-## Data Processing and Cleaning
+##Data Processing and Cleaning
 1. Unzip and load raw data
 2. Process data definitions information for categorical variables
 3. Process raw data
 4. Apply processed factors
 5. Remove uninformative or high-risk variables
 
-For more detailed information on data processing please refer to the  [data_processing.R](https://github.com/bmanry13/case_study_1/blob/master/source/data_processing.R) file located on the GitHub repository.
+Additional information regarding data ingestion and processing can be found in the [codebook](https://github.com/bmanry13/case_study_2/blob/master/rawdata/Codebook.md) as well in the [data_processing.R](https://github.com/bmanry13/case_study_2/blob/master/source/data_processing.R) files located on the GitHub repository.
 
 
-# Analysis
-## Influential Variable Identification
+#Analysis
+##Influential Variable Identification
 The team used a combination of univariate,  machine learning techniques to identify variables in the data which are important when predicting employee attrition.
 
 *Process Overview:*
@@ -1155,11 +1155,11 @@ rf_model
 ##                      Number of trees: 500
 ## No. of variables tried at each split: 5
 ## 
-##         OOB estimate of  error rate: 13.88%
+##         OOB estimate of  error rate: 13.81%
 ## Confusion matrix:
 ##       No Yes class.error
-## No  1225   8  0.00648824
-## Yes  196  41  0.82700422
+## No  1224   9  0.00729927
+## Yes  194  43  0.81856540
 ```
 
 ```r
@@ -1173,62 +1173,62 @@ importance(rf_model)
 ```
 
 ```
-##                                   No        Yes MeanDecreaseAccuracy
-## BusinessTravel            4.18329753  4.0719576            5.6742194
-## DailyRate                -1.15196543  0.7457460           -0.6322164
-## Department                3.98404289  2.2180087            4.6620209
-## DistanceFromHome          0.49995918  2.5412345            1.6671653
-## Education                -0.30051033 -0.3183185           -0.3950351
-## EducationField            3.99730726 -0.1068954            3.4209470
-## EnvironmentSatisfaction   4.36091723  5.3531295            6.4638943
-## HourlyRate                0.09972672 -1.1008680           -0.3464622
-## JobInvolvement            2.40153438  5.5931647            4.9140615
-## JobLevel                  9.11969346  9.8632686           12.3466018
-## JobRole                  11.36471846  7.9925623           14.3169221
-## JobSatisfaction           3.62143341  4.0222817            4.9025719
-## MonthlyIncome            11.41118813 10.3246045           15.2494834
-## MonthlyRate              -1.73094390 -1.4970742           -2.1935744
-## NumCompaniesWorked        2.35733543  1.1618965            2.8544181
-## OverTime                 17.13951997 22.8669409           25.4216128
-## PercentSalaryHike         1.15741689 -1.6685750            0.3491598
-## PerformanceRating        -1.14589057  0.3059921           -0.8516006
-## RelationshipSatisfaction  3.06486112  0.5156865            2.9171577
-## StockOptionLevel          7.59834876 11.7379618           11.9603547
-## TotalWorkingYears         8.34196988  6.8909489           11.3261406
-## TrainingTimesLastYear     0.46129411  0.9089488            0.7702887
-## WorkLifeBalance           5.34839667  4.4702897            6.8490314
-## YearsAtCompany            6.66675332  3.4431569            8.0148985
-## YearsInCurrentRole        5.28015234  3.5684978            7.2875801
-## YearsSinceLastPromotion   6.17179676 -1.6151901            5.0917098
-## YearsWithCurrManager      6.26303516  2.6833927            7.7723798
+##                                  No         Yes MeanDecreaseAccuracy
+## BusinessTravel            4.8314453  3.02238079           5.68920797
+## DailyRate                 0.5479456  0.54685289           0.74097947
+## Department                2.7893050  2.71309410           3.80616426
+## DistanceFromHome         -0.1582102  0.14129534          -0.05654979
+## Education                 2.1755288 -0.61449888           1.81984822
+## EducationField            3.9215717 -0.10583523           3.43310818
+## EnvironmentSatisfaction   3.4276998  4.10073664           5.14790353
+## HourlyRate               -1.9121361  0.07891132          -1.63998692
+## JobInvolvement            3.4322605  3.80624889           4.87208370
+## JobLevel                  8.8074836  8.86665808          11.63966490
+## JobRole                  12.3115830  8.34468318          14.95238375
+## JobSatisfaction           3.9070673  4.22374701           5.44954899
+## MonthlyIncome            12.7700361 10.33863728          17.36289861
+## MonthlyRate               0.1846452 -2.58768438          -0.97015109
+## NumCompaniesWorked        2.5422695  0.31876429           2.36923961
+## OverTime                 17.0099251 21.60469035          24.54474409
+## PercentSalaryHike         1.3033441 -0.40228795           0.94450060
+## PerformanceRating         0.4368149 -0.03858331           0.37732303
+## RelationshipSatisfaction  1.2919456 -0.58352723           0.86406142
+## StockOptionLevel          5.2493704 11.07674878           9.78569033
+## TotalWorkingYears         9.8638876  5.91517189          12.04988166
+## TrainingTimesLastYear     1.1549503  0.47240315           1.23334602
+## WorkLifeBalance           3.7897079  3.76794970           5.04512440
+## YearsAtCompany            7.1755898  3.81032470           8.70654813
+## YearsInCurrentRole        3.4712453  5.02931908           5.85179235
+## YearsSinceLastPromotion   3.2347674  0.56602023           3.37930361
+## YearsWithCurrManager      5.4447083  4.88027377           7.46312131
 ##                          MeanDecreaseGini
-## BusinessTravel                   7.183971
-## DailyRate                       23.449806
-## Department                       4.404459
-## DistanceFromHome                20.089302
-## Education                       10.547290
-## EducationField                  13.855129
-## EnvironmentSatisfaction         14.381641
-## HourlyRate                      20.366089
-## JobInvolvement                  10.359475
-## JobLevel                        10.089413
-## JobRole                         20.328761
-## JobSatisfaction                 13.151676
-## MonthlyIncome                   31.918956
-## MonthlyRate                     21.449383
-## NumCompaniesWorked              14.080540
-## OverTime                        21.602544
-## PercentSalaryHike               15.137448
-## PerformanceRating                1.389901
-## RelationshipSatisfaction        10.948351
-## StockOptionLevel                14.701447
-## TotalWorkingYears               22.895565
-## TrainingTimesLastYear           11.307468
-## WorkLifeBalance                 12.078722
-## YearsAtCompany                  16.816109
-## YearsInCurrentRole              10.582267
-## YearsSinceLastPromotion         10.926229
-## YearsWithCurrManager            13.571852
+## BusinessTravel                   8.083936
+## DailyRate                       23.260104
+## Department                       3.868418
+## DistanceFromHome                20.056934
+## Education                       10.616330
+## EducationField                  13.504224
+## EnvironmentSatisfaction         13.570995
+## HourlyRate                      20.647063
+## JobInvolvement                  10.221072
+## JobLevel                         9.391045
+## JobRole                         20.340913
+## JobSatisfaction                 12.636395
+## MonthlyIncome                   32.137802
+## MonthlyRate                     21.469651
+## NumCompaniesWorked              14.070193
+## OverTime                        22.776388
+## PercentSalaryHike               14.913680
+## PerformanceRating                1.383819
+## RelationshipSatisfaction        10.935640
+## StockOptionLevel                14.297011
+## TotalWorkingYears               23.202420
+## TrainingTimesLastYear           11.267467
+## WorkLifeBalance                 11.871330
+## YearsAtCompany                  17.268637
+## YearsInCurrentRole              11.226800
+## YearsSinceLastPromotion         10.707235
+## YearsWithCurrManager            13.140616
 ```
 
 ```r
@@ -1240,9 +1240,9 @@ The top results of the RF model suggests that OverTime is a clear top variable f
 
 Top Five Variables from Random Forest:
 
-1. StockOptionLevel
+1. JobLevel
 
-2. JobLevel
+2. TotalWorkingYears
 
 3. JobRole
 
@@ -1264,19 +1264,19 @@ gbm_model <- gbm.fit(as.data.frame(analysis_df[,-1]), analysis_df$Attrition == "
 
 ```
 ## Iter   TrainDeviance   ValidDeviance   StepSize   Improve
-##      1        0.8833             nan     0.0010    0.0001
-##      2        0.8832             nan     0.0010    0.0000
-##      3        0.8831             nan     0.0010    0.0000
-##      4        0.8829             nan     0.0010    0.0001
+##      1        0.8832             nan     0.0010    0.0001
+##      2        0.8831             nan     0.0010    0.0001
+##      3        0.8830             nan     0.0010    0.0000
+##      4        0.8829             nan     0.0010    0.0000
 ##      5        0.8828             nan     0.0010    0.0001
 ##      6        0.8827             nan     0.0010    0.0001
-##      7        0.8826             nan     0.0010    0.0000
-##      8        0.8825             nan     0.0010    0.0000
-##      9        0.8824             nan     0.0010    0.0000
-##     10        0.8823             nan     0.0010    0.0001
-##     20        0.8811             nan     0.0010    0.0001
+##      7        0.8825             nan     0.0010    0.0001
+##      8        0.8824             nan     0.0010    0.0000
+##      9        0.8823             nan     0.0010    0.0000
+##     10        0.8821             nan     0.0010    0.0001
+##     20        0.8810             nan     0.0010    0.0000
 ##     40        0.8787             nan     0.0010    0.0001
-##     60        0.8764             nan     0.0010    0.0000
+##     60        0.8764             nan     0.0010    0.0001
 ##     80        0.8741             nan     0.0010    0.0000
 ##    100        0.8719             nan     0.0010    0.0000
 ```
@@ -1288,7 +1288,7 @@ gbm_model
 ```
 ## A gradient boosted model with bernoulli loss function.
 ## 100 iterations were performed.
-## There were 27 predictors of which 7 had non-zero influence.
+## There were 27 predictors of which 8 had non-zero influence.
 ```
 
 ```r
@@ -1297,13 +1297,14 @@ summary(gbm_model)
 
 ```
 ##                                               var   rel.inf
-## OverTime                                 OverTime 45.694313
-## TotalWorkingYears               TotalWorkingYears 28.022565
-## MonthlyIncome                       MonthlyIncome 10.519428
-## YearsAtCompany                     YearsAtCompany  6.836015
-## JobLevel                                 JobLevel  4.123704
-## JobRole                                   JobRole  2.529893
-## StockOptionLevel                 StockOptionLevel  2.274081
+## OverTime                                 OverTime 49.992155
+## TotalWorkingYears               TotalWorkingYears 23.458752
+## MonthlyIncome                       MonthlyIncome 14.920617
+## StockOptionLevel                 StockOptionLevel  3.772147
+## YearsAtCompany                     YearsAtCompany  3.027298
+## JobLevel                                 JobLevel  2.249546
+## JobRole                                   JobRole  1.451984
+## YearsWithCurrManager         YearsWithCurrManager  1.127501
 ## BusinessTravel                     BusinessTravel  0.000000
 ## DailyRate                               DailyRate  0.000000
 ## Department                             Department  0.000000
@@ -1323,7 +1324,6 @@ summary(gbm_model)
 ## WorkLifeBalance                   WorkLifeBalance  0.000000
 ## YearsInCurrentRole             YearsInCurrentRole  0.000000
 ## YearsSinceLastPromotion   YearsSinceLastPromotion  0.000000
-## YearsWithCurrManager         YearsWithCurrManager  0.000000
 ```
 
 ```r
@@ -1343,9 +1343,9 @@ Top Six Variables from GBM:
 
 3. MonthlyIncome
 
-4. YearsAtCompany
+4. StockOptionLevel
 
-5. JobLevel
+5. YearsAtCompany
 
 6. OverTime
 

@@ -61,7 +61,7 @@ This project uses exploratory data analysis to determine the top three factors t
 4. Apply processed factors
 5. Remove uninformative or high-risk variables
 
-For more detailed information on data processing please refer to the  [data_processing.R](https://github.com/bmanry13/case_study_1/blob/master/source/data_processing.R) file located on the GitHub repository.
+Additional information regarding data ingestion and processing can be found in the [codebook](https://github.com/bmanry13/case_study_2/blob/master/rawdata/Codebook.md) as well in the [data_processing.R](https://github.com/bmanry13/case_study_2/blob/master/source/data_processing.R) files located on the GitHub repository.
 
 
 #Analysis
