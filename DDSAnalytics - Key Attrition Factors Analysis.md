@@ -50,7 +50,7 @@ This project uses exploratory data analysis to determine the top three factors t
 * Some Variables have little or no information so are discarded: Employee Number, Over 18, Standard Hours
 
 
-##Data Processing and Cleaning
+## Data Processing and Cleaning
 1. Unzip and load raw data
 2. Process data definitions information for categorical variables
 3. Process raw data
@@ -60,8 +60,8 @@ This project uses exploratory data analysis to determine the top three factors t
 For more detailed information on data processing please refer to the  [data_processing.R](https://github.com/bmanry13/case_study_1/blob/master/source/data_processing.R) file located on the GitHub repository.
 
 
-#Analysis
-##Influential Variable Identification
+# Analysis
+## Influential Variable Identification
 The team used a combination of univariate,  machine learning techniques to identify variables in the data which are important when predicting employee attrition.
 
 *Process Overview:*
