@@ -155,7 +155,10 @@ So about 16% of employees are lost. This tells us that, if we find any rates hig
 Let's start with distance from home, and see how that might relate to attrition rates:
 
 ```{r}
-attrition_rate_distance <- analysis_df %>%
+analysis_df2 <- analysis_df %>% mutate_if(is.factor, as.character)
+analysis_df2$Attrition <- analysis_df2$Attrition == "Yes"
+
+attrition_rate_distance <- analysis_df2 %>%
   group_by(DistanceFromHome) %>%
   count(att_count = Attrition) %>%
   group_by(att_count)
@@ -178,7 +181,7 @@ Looking at that graph, it appears that there are some extremely high attrition r
 Now, let's look at education:
 
 ```{r}
-attrition_rate_education <- analysis_df %>%
+attrition_rate_education <- analysis_df2 %>%
   group_by(Education) %>%
   count(att_count = Attrition) %>%
   group_by(att_count)
@@ -201,8 +204,9 @@ Education appears to relate to attrition too, an increase in education sees a lo
 
 Let's continue and create a function to do this analysis:
 ```{r}
-att_rate <- function(analysis_df, grouper) {
-  attrition_rate_grouped <- analysis_df %>%
+att_rate <- function(df, grouper) {
+  
+  attrition_rate_grouped <- df %>%
     group_by_(grouper) %>%
     count(att_count = Attrition) %>%
     group_by(att_count)
@@ -214,37 +218,29 @@ att_rate <- function(analysis_df, grouper) {
      mutate(AttRate = n.x / (n.x + n.y))
   attrition_rate_grouped
 }
-# Just test it out to make sure it works
-education <- att_rate(analysis_df, "Education")
-head(education)
-```
 
-```{r}
-names(analysis_df)
 ```
 Here are just a few more examples:
 ```{r}
-hourly_att <- att_rate(analysis_df, "HourlyRate")
+hourly_att <- att_rate(analysis_df2, "HourlyRate")
 head(hourly_att)
-role_att <- att_rate(analysis_df, "JobRole")
+role_att <- att_rate(analysis_df2, "JobRole")
 head(role_att)
-performance_att <- att_rate(analysis_df, "PerformanceRating")
+performance_att <- att_rate(analysis_df2, "PerformanceRating")
 performance_att
 ```
 We can rule out performance rating, since it has so few variables it would be impossible to interpret.
 
 ```{r}
 exclude_names <- c("Age", "Gender", "Attrition", "Over18", "EmployeeNumber", "EmployeeCount", "StandardHours")
-names_use <- names(analysis_df)[!names(analysis_df) %in% exclude_names]
-# A number of these graphs do not provide useful information because of the data format
-ugly_graphs <- c("")
+names_use <- names(analysis_df2)[!names(df_as_character) %in% exclude_names]
 
 att_differences <- c("DailyRate", "MonthlyIncome", "MonthlyRate")
-# TODO: remove the graphs that are ugly
+
 for (name in names_use) {
   name_title_split <- regmatches(name, gregexpr("[A-Z]+[a-z]+", name, perl = T))
   name_title <- paste(name_title_split[[1]], collapse = " ")
-  name_att <- att_rate(analysis_df, name)
+  name_att <- att_rate(analysis_df2, name)
   max_att <- max(name_att$AttRate)
   min_att <- min(name_att$AttRate)
   att_diff <- max_att - min_att
@@ -256,8 +252,8 @@ plot <- ggplot(name_att) +
     ggtitle(plot_title) +
     coord_flip()
   print(plot)
-  file_name <- paste(c("../case_study_extra/graphs/", name, ".png"), collapse = "")
-  ggsave(file_name)
+  #file_name <- paste(c("../case_study_extra/graphs/", name, ".png"), collapse = "")
+  #ggsave(file_name)
 }
 att_differences
 ```
