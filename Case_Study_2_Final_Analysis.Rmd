@@ -141,18 +141,18 @@ By creating a model with all variables included and using AIC to stepwise backwa
 * Once an employee reaches job level 2 they are around four times less likely to leave
 * The addition stock options reduces the likelihood of an employee leaving by two to four times compared to employees with no stock option
 
-# Attrition Rate Factors
+### Exploring the Data Using Visualization
 ```{r}
-analysis_df$Attrition <- analysis_df$Attrition == "Yes"
-attrition <- length(analysis_df$Attrition[analysis_df$Attrition])
-non_attrition <- length(analysis_df$Attrition[!analysis_df$Attrition])
+analysis_df2$Attrition <- analysis_df$Attrition == "Yes"
+attrition <- length(analysis_df2$Attrition[analysis_df2$Attrition])
+non_attrition <- length(analysis_df2$Attrition[!analysis_df2$Attrition])
 attrition/(non_attrition+attrition)
 ```
-So about 16% of employees are lost. This tells us that, if we find any rates higher than .16, it might be worth a further look.
+So about 16% of employees leave their company voluntarily. This tells us that if we find any group with rates significantly higher or lower than 16% there might be an interesting trend.
 
 ### Looking at Different Columns
 
-Let's start with distance from home, and see how that might relate to attrition rates:
+Since there are many factors that might lead to attrition, we start with an arbitrary data column. Looking at distance from home we see how that might relate to attrition rates:
 
 ```{r}
 analysis_df2 <- analysis_df %>% mutate_if(is.factor, as.character)
@@ -178,7 +178,7 @@ ggplot(attrition_rate_distance) +
 Looking at that graph, it appears that there are some extremely high attrition rates for some distances, and the general pattern is, that, as the distance increases, so does the attrition rate.
 
 
-Now, let's look at education:
+Looking at yet another arbitrary data point, education, we find data that looks different:
 
 ```{r}
 attrition_rate_education <- analysis_df2 %>%
@@ -200,9 +200,9 @@ attrition_rate_education
 ggplot(attrition_rate_education) +
   geom_col(mapping = aes(x = Education, y = AttRate), fill = "blue") + ggtitle("Education Level Does Not Affect Attrition")
 ```
-Education appears to relate to attrition too, an increase in education sees a lower rate of attrition. However, nothing is extremely high, and education might be due to a secondary influence.
+Education may be related to attrition, since visually it appears an increase in education correlates with lower rate of attrition. However, the differences are so close it may be due to statistical noise.
 
-Let's continue and create a function to do this analysis:
+A small helper function:
 ```{r}
 att_rate <- function(df, grouper) {
   
@@ -229,7 +229,10 @@ head(role_att)
 performance_att <- att_rate(analysis_df2, "PerformanceRating")
 performance_att
 ```
-We can rule out performance rating, since it has so few variables it would be impossible to interpret.
+We can rule out performance rating and hourly rate, since they have so few variables they would be impossible to interpret.
+
+#### Graphing Each Point
+We exclude some data points because in the United States they are protected status, or because they do not have much information. For example, it is illegal to discriminate based on age and gender, so creating a model to predict attrition based on these factors could lead to some unethical waters. We decide to play it safe and stay away from these two data points.
 
 ```{r}
 exclude_names <- c("Age", "Gender", "Attrition", "Over18", "EmployeeNumber", "EmployeeCount", "StandardHours")
@@ -258,9 +261,9 @@ plot <- ggplot(name_att) +
 att_differences
 ```
 
-Looking at time based data points (such as years in a job, etc. ), there is an interesting pattern that emerges. The number of years someone has been doing something tends to correlate with a decrease in attrition. However, at highest amount of years, there tends to be an increase. This may, however be due to retirement.
+Looking at time based data points (such as years in a job, etc. ), there is an interesting pattern that emerges. The number of years someone has been doing something tends to correlate with a decrease in attrition. However, at highest amount of years, there tends to be an increase. 
 
-Other interesting patterns:
+Other interesting patterns in the visualizations:
 
 ### Sales
 In the graph of positions, the sales representative postion has a very high attrition rate (near 40%), as well as the sales department having a high attrition rate (21%) compared to other departments.
@@ -275,29 +278,26 @@ Stock options tend to decrease attrition, however, the highest sees a spike in a
 Being a manager is appealing: managers have a very low attrition rate (5%), but not quite as appealing as being a research director (2%). Research director positions are so rare, however that it might be more difficult to transfer to another organization with a similar role.
 
 ### Chi-Squared Test for Independence
-Now that we've looked at the graphs, we can start taking a look at what values are related to attrition with a statistical method.
+After looking at the graphs, we can start taking a look at what values are related to attrition with a statistical method.
 
 ```{r}
 significant_variables <- c()
 analysis_df <- data.frame(unclass(analysis_df))
 for (name in names_use) {
   tbl <- table(analysis_df[, "Attrition"], analysis_df[, name])
-  print(name)
   test_result <- chisq.test(tbl) 
   if (test_result$p.value < .05) {
-    print(test_result)
     significant_variables <- c(significant_variables, name)
-  } else {
-    print(test_result$p.value)
-    print("Did not pass threshold")
-  }
+  } 
 }
+```
+The variables that pass the p-threshold of 0.05 are:
+```{r}
 significant_variables
 ```
-
+This means there are ten variables that do not appear to be correlated with attrition rate:
 ```{r}
-length(significant_variables)
-length(names_use)
+length(names_use) - length(significant_variables)
 ```
 
 ### Differences between attrition rates
@@ -310,7 +310,7 @@ attrition_ordered <- attrition_diff_df[order(-attrition_diff_df$att_differences)
 attrition_ordered
 ```
 
-Most of the top attrition rate differences are listed in the significant variables. Daily rate, though, is not. This may be due to the large distribution of values in daily rate, which means that the influence may have been missed.
+Most of the top attrition rate differences are part of the previous list of significant variables. Daily rate, though, is not, perhaps because a chi-squared test is not the most appropriate way to test for significance with that variable. A more appropriate test comes later.
 
 ## Explore trends that exist in current employees
 ```{r}
