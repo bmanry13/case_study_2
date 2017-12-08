@@ -23,6 +23,7 @@ unzip(zipfile = "./rawdata/CaseStudy2data.zip", files = "CaseStudy2-data.xlsx", 
 rawdata_df <- readxl::read_xlsx("./tempextract/CaseStudy2-data.xlsx", sheet = "HR-employee-attrition Data")
 data_def_df <- readxl::read_xlsx("./tempextract/CaseStudy2-data.xlsx", sheet = "Data Definitions", col_names = c("variable", "rawcode"))
 unlink("./tempextract", recursive = TRUE) # delete temp dir
+raw_dim <- dim(rawdata_df)
 
 ##### 2) PROCESS DATA DEFINITIONS DF #####
 data_def_df <- data_def_df %>% 
