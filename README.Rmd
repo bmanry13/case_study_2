@@ -1,16 +1,20 @@
 # Case Study 2 README
 
 ## Introduction 
-TODO
+DDSAnalytics, an analytics company that specialized in talent management solutions for Furtune 100 companies, is planning to leverage data science for talent management. Talent management is defined as the iterative process of developing and retaining employees. It may include workforce planning, employee training programs, identifying high-potential employees and reducing/preventing voluntary employee turnover (attrition). Our goal is to maximize talent management. 
 
 ## Purpose 
-TODO
+This project uses exploratory data analysis to determine the top three factors that lead to attrition. In addition, we want to discover trends within specific job roles. This will give DDSAnalytics a competitive edge over its competition.
 
 ## Instructions for reproducing output
  1. Clone this repository
  2. Download and install the libraries
- 3. Load the packages
+ 3. Run MakeAnalysis.R
 
+## Summary of Findings:
+1. The top five variables for determining attrition are: overtime, stock option level, job role, job level and years with current manager
+2. Sales Representatives have the highest rate of attrition (the most likely to leave the Company)
+3. Research and Development employees are the most satisfied in their jobs.
 
 ## Contributors: 
 Brychan Manry,Patricia Goresen, and Bradley Robinson
